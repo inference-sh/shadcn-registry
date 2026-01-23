@@ -11,7 +11,7 @@ import type {
     AgentOptions,
     AgentUIStatus,
     AgentActions,
-    ClientToolHandlerFn,
+    ClientToolHandler,
 } from '@/components/agent/types';
 import {
     isAdHocConfig,
@@ -38,7 +38,7 @@ export interface ActionsContext {
     getConfig: () => AgentOptions | null;
     getAgentName: () => string | undefined;
     getChatId: () => string | null;
-    getClientToolHandlers: () => Map<string, ClientToolHandlerFn>;
+    getClientToolHandlers: () => Map<string, ClientToolHandler>;
     callbacks: {
         onChatCreated?: (chatId: string) => void;
         onStatusChange?: (status: AgentUIStatus) => void;
@@ -116,9 +116,9 @@ export function createActions(ctx: ActionsContext): ActionsResult {
                         continue;
                     }
 
-                    // Execute the handler
+                    // Execute the handler (may return string or Promise<string>)
                     const args = invocation.function?.arguments || {};
-                    handler(args)
+                    Promise.resolve(handler(args))
                         .then((result) => {
                             const agent = getAgent();
                             agent?.submitToolResult(invocation.id, result);
@@ -343,7 +343,7 @@ export function createActions(ctx: ActionsContext): ActionsResult {
 // Helper: Extract client tool handlers from config
 // =============================================================================
 
-export function getClientToolHandlers(config: AgentOptions | null): Map<string, ClientToolHandlerFn> {
+export function getClientToolHandlers(config: AgentOptions | null): Map<string, ClientToolHandler> {
     if (!config || !isAdHocConfig(config) || !config.tools) {
         return new Map();
     }

@@ -9,7 +9,7 @@ import type { Agent, Inference } from '@inferencesh/sdk';
 import { AgentContext, type AgentContextValue } from '@/components/agent/context';
 import { chatReducer, initialState } from '@/components/agent/lib/reducer';
 import { createActions, getClientToolHandlers, type ActionsContext, type ActionsResult } from '@/components/agent/lib/actions';
-import type { AgentProviderProps, AgentOptions, AgentUIStatus, ClientToolHandlerFn } from '@/components/agent/types';
+import type { AgentProviderProps, AgentOptions, AgentUIStatus, ClientToolHandler } from '@/components/agent/types';
 
 /**
  * AgentProvider - Provides chat state and actions to children
@@ -45,7 +45,7 @@ export function AgentProvider({
   const configRef = useRef<AgentOptions | null>(config);
   const agentNameRef = useRef<string | undefined>(name);
   const chatIdRef = useRef<string | null>(chatId ?? null);
-  const clientToolHandlersRef = useRef<Map<string, ClientToolHandlerFn>>(
+  const clientToolHandlersRef = useRef<Map<string, ClientToolHandler>>(
     getClientToolHandlers(config)
   );
   const callbacksRef = useRef<{
