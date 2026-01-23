@@ -227,8 +227,8 @@ You are helping users configure a SaaS pricing plan. The form contains:
       {!isStarted ? (
         <div className="border rounded-lg p-6 space-y-4">
           <p className="text-sm text-muted-foreground">
-            This demo shows an AI assistant that can read and manipulate a form.
-            The agent uses client-side tools (scan_ui, fill_field) to interact with the pricing configurator.
+            this demo shows an AI assistant that can read and manipulate a form.
+            the agent uses client-side tools (scan_ui, fill_field) to interact with the pricing configurator.
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -329,7 +329,7 @@ export default function AgentDemoPage() {
           <div id="client-tools-source" className="space-y-3 pt-4">
             <h3 className="text-lg font-medium">source code</h3>
             <p className="text-sm text-muted-foreground">
-              The Agent component uses client-side tools with an accessibility tree scanner to understand and interact with DOM elements.
+              the agent component uses client-side tools with an accessibility tree scanner to understand and interact with DOM elements.
             </p>
             <Tabs defaultValue="agent">
               <TabsList className="justify-start flex-wrap h-auto gap-1">
@@ -656,7 +656,7 @@ export function fillField(root: HTMLElement, field: string, value: string): Prom
           <div id="api-proxy" className="space-y-3">
             <h3 className="text-lg font-medium">api proxy</h3>
             <p className="text-sm text-muted-foreground">
-              Add the API proxy route to your Next.js app:
+              add the API proxy route to your Next.js app:
             </p>
             <CodeBlock language="typescript">
               {`// app/api/inference/proxy/route.ts
@@ -669,14 +669,14 @@ export const { GET, POST, PUT } = route;`}
           <div id="env-vars" className="space-y-3">
             <h3 className="text-lg font-medium">environment variables</h3>
             <p className="text-sm text-muted-foreground">
-              Set your API key in .env.local:
+              set your API key in .env.local:
             </p>
             <CodeBlock language="bash">
               {`INFERENCE_API_KEY=inf_...`}
             </CodeBlock>
             <p className="text-sm text-muted-foreground">
-              Get your API key at{' '}
-              <a href="https://inference.sh" className="underline hover:text-foreground">
+              get your API key at{' '}
+              <a href="https://app.inference.sh/settings/keys" className="underline hover:text-foreground">
                 inference.sh
               </a>
             </p>
@@ -687,7 +687,7 @@ export const { GET, POST, PUT } = route;`}
         <section id="usage" className="space-y-4">
           <h2 className="text-2xl font-semibold">usage</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            The simplest way to use the Agent component:
+            the simplest way to use the Agent component:
           </p>
           <CodeBlock language="tsx">
             {`import { Agent } from '@/components/agent'
