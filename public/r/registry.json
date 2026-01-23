@@ -22,8 +22,7 @@
         { "path": "registry/blocks/agent/types.ts", "type": "registry:lib", "target": "components/agent/types.ts" },
         { "path": "registry/blocks/agent/hooks/use-agent.ts", "type": "registry:hook", "target": "hooks/use-agent.ts" },
         { "path": "registry/blocks/agent/internal/reducer.ts", "type": "registry:lib", "target": "components/agent/lib/reducer.ts" },
-        { "path": "registry/blocks/agent/internal/actions.ts", "type": "registry:lib", "target": "components/agent/lib/actions.ts" },
-        { "path": "registry/blocks/agent/lib/tool-builder.ts", "type": "registry:lib", "target": "components/agent/lib/tool-builder.ts" }
+        { "path": "registry/blocks/agent/internal/actions.ts", "type": "registry:lib", "target": "components/agent/lib/actions.ts" }
       ]
     },
     {

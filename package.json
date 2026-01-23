@@ -10,7 +10,7 @@
     "registry:build": "shadcn build"
   },
   "dependencies": {
-    "@inferencesh/sdk": "^0.4.15",
+    "@inferencesh/sdk": "^0.4.22",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",

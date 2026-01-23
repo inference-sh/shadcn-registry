@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@inferencesh/sdk':
-        specifier: ^0.4.15
-        version: 0.4.15(express@5.1.0)(next@16.1.4(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
+        specifier: ^0.4.22
+        version: 0.4.22(express@5.1.0)(next@16.1.4(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@radix-ui/react-checkbox':
         specifier: ^1.3.3
         version: 1.3.3(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -491,8 +491,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@inferencesh/sdk@0.4.15':
-    resolution: {integrity: sha512-hYEyRAliVd9jeUwiRPSJ8BSj7igKZAGu4qS6hW1vDP3YRS7dGRV3/CNAnYy3+wpPQXwHhI7byL20b/Q85dWEiQ==}
+  '@inferencesh/sdk@0.4.22':
+    resolution: {integrity: sha512-u9SkFuheVQAfHaSgxI1jYzpXXGZqGbDrH5KOrhTDrJRxriTzhVleMtPin3UeDS0yXWXENkWButWQAtjr0cnP6g==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@sveltejs/kit': '>=2.0.0'
@@ -4131,7 +4131,7 @@ snapshots:
   '@img/sharp-win32-x64@0.34.5':
     optional: true
 
-  '@inferencesh/sdk@0.4.15(express@5.1.0)(next@16.1.4(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+  '@inferencesh/sdk@0.4.22(express@5.1.0)(next@16.1.4(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
     dependencies:
       eventsource: 4.1.0
     optionalDependencies:

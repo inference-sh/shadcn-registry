@@ -412,8 +412,7 @@ function PricingAssistantDemo() {
                   {`import type { RefObject } from 'react'
 import { scanAccessibilityTree, formatAccessibilityTree } from './scanner'
 import { interact, getFormState, fillField, type InteractionAction } from './interactor'
-import { tool, string, boolean, enumOf, optional } from '@/registry/blocks/agent/lib/tool-builder'
-import type { ClientTool } from '@/registry/blocks/agent/types'
+import { tool, string, boolean, enumOf, optional, type ClientTool } from '@inferencesh/sdk'
 
 /** Wraps a handler to inject scopeRef from closure */
 const withScope = (

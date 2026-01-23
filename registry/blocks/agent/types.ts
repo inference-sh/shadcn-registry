@@ -16,6 +16,8 @@ import type {
     AgentTool,
     AgentConfig,
     File as FileDTO,
+    ClientTool,
+    ClientToolHandler,
 } from '@inferencesh/sdk';
 
 // Re-export SDK types for consumers
@@ -26,6 +28,8 @@ export type {
     ChatMessageContent,
     ChatMessageRole,
     TaskStatus,
+    ClientTool,
+    ClientToolHandler,
 };
 
 // =============================================================================
@@ -204,15 +208,8 @@ export interface ChatContainerProps {
 }
 
 // =============================================================================
-// Client Tools
+// Client Tools (types imported from SDK, helpers defined here)
 // =============================================================================
-
-export type ClientToolHandlerFn = (args: Record<string, unknown>) => Promise<string>;
-
-export interface ClientTool {
-    schema: AgentTool;
-    handler: ClientToolHandlerFn;
-}
 
 export function isClientTool(tool: AgentTool | ClientTool): tool is ClientTool {
     return 'handler' in tool && 'schema' in tool;
@@ -224,8 +221,8 @@ export function extractToolSchemas(tools: (AgentTool | ClientTool)[]): AgentTool
 
 export function extractClientToolHandlers(
     tools: (AgentTool | ClientTool)[]
-): Map<string, ClientToolHandlerFn> {
-    const handlers = new Map<string, ClientToolHandlerFn>();
+): Map<string, ClientToolHandler> {
+    const handlers = new Map<string, ClientToolHandler>();
     for (const tool of tools) {
         if (isClientTool(tool)) {
             handlers.set(tool.schema.name, tool.handler);
