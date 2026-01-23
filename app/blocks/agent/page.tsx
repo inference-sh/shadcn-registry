@@ -15,6 +15,7 @@ import { Sparkles } from 'lucide-react'
 const tocItems: TocItem[] = [
   { id: 'demo', title: 'demo' },
   { id: 'client-tools-source', title: 'client tools source', level: 2 },
+  { id: 'image-agent', title: 'image agent', level: 2 },
   { id: 'installation', title: 'installation' },
   { id: 'setup', title: 'setup' },
   { id: 'api-proxy', title: 'api proxy', level: 2 },
@@ -282,6 +283,30 @@ You are helping users configure a SaaS pricing plan. The form contains:
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// =============================================================================
+// Image Agent Demo
+// =============================================================================
+
+function ImageAgentDemo() {
+  return (
+    <div className="border rounded-lg overflow-hidden h-[500px]">
+      <Agent
+        proxyUrl="/api/inference/proxy"
+        name="image-agent"
+        config={{ agent: 'okaris/shadcn-image@045tep9w' }}
+        description="I can generate images from your descriptions"
+        examplePrompts={[
+          'a cat wearing a top hat',
+          'sunset over mountains with a lake',
+          'futuristic city at night',
+        ]}
+        allowFiles={false}
+        allowImages={false}
+      />
     </div>
   )
 }
@@ -637,6 +662,24 @@ export function fillField(root: HTMLElement, field: string, value: string): Prom
                 </CodeBlock>
               </TabsContent>
             </Tabs>
+          </div>
+
+          {/* Image Agent Demo */}
+          <div id="image-agent" className="space-y-3 pt-4">
+            <h3 className="text-lg font-medium">image agent</h3>
+            <p className="text-sm text-muted-foreground">
+              agents can also be used with just a ref - no ad-hoc configuration needed.
+              this demo uses a template agent for image generation.
+            </p>
+            <ImageAgentDemo />
+            <CodeBlock language="tsx">
+              {`<Agent
+  proxyUrl="/api/inference/proxy"
+  config={{ agent: 'okaris/shadcn-image@045tep9w' }}
+  description="I can generate images from your descriptions"
+  examplePrompts={['a cat wearing a top hat']}
+/>`}
+            </CodeBlock>
           </div>
         </section>
 

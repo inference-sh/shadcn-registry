@@ -28,7 +28,7 @@ import { MessageContent } from '@/components/agent/message-content';
 import { MessageReasoning } from '@/components/agent/message-reasoning';
 import { MessageStatusIndicator } from '@/components/agent/message-status-indicator';
 import { ToolInvocations } from '@/components/agent/tool-invocations';
-import type { AgentProps, ChatMessageDTO, AdHocAgentConfig } from '@/components/agent/types';
+import type { AgentProps, ChatMessageDTO } from '@/components/agent/types';
 import { isAdHocConfig } from '@/components/agent/types';
 
 // Check if message status is terminal (generation complete)
@@ -60,11 +60,7 @@ function hasTextContent(message: ChatMessageDTO): boolean {
 // Internal Components
 // =============================================================================
 
-const DefaultHeader = memo(function DefaultHeader({
-  config,
-}: {
-  config: AdHocAgentConfig;
-}) {
+const DefaultHeader = memo(function DefaultHeader() {
   return (
     <div className="flex items-center gap-2 px-4 py-3 border-b">
       <Bot className="h-4 w-4 text-primary" />
@@ -99,19 +95,20 @@ const ExamplePrompts = memo(function ExamplePrompts({
 });
 
 const EmptyState = memo(function EmptyState({
-  config,
+  description,
+  examplePrompts = [],
 }: {
-  config: AdHocAgentConfig;
+  description?: string;
+  examplePrompts?: string[];
 }) {
   const { sendMessage } = useAgentActions();
-  const examplePrompts = config.example_prompts || [];
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
       <Bot className="h-8 w-8 mb-3 opacity-50" />
       <p className="text-sm font-medium">how can I help?</p>
       <p className="text-xs mt-1 opacity-70">
-        {config.description || 'ask me anything'}
+        {description || 'ask me anything'}
       </p>
       {examplePrompts.length > 0 && (
         <ExamplePrompts prompts={examplePrompts} onSelect={sendMessage} />
@@ -186,30 +183,32 @@ const MessageList = memo(function MessageList({
 });
 
 const AgentContent = memo(function AgentContent({
-  config,
   className,
   compact,
   allowFiles = true,
   allowImages = true,
+  description,
+  examplePrompts,
 }: {
-  config: AdHocAgentConfig;
   className?: string;
   compact?: boolean;
   allowFiles?: boolean;
   allowImages?: boolean;
+  description?: string;
+  examplePrompts?: string[];
 }) {
   const { messages, isGenerating } = useAgent();
   const hasMessages = messages.length > 0;
 
   return (
     <ChatContainer className={cn('h-full p-2', className)}>
-      {!compact && <DefaultHeader config={config} />}
+      {!compact && <DefaultHeader />}
       {hasMessages ? (
         <ChatMessages className="flex-1">
           {({ messages }) => <MessageList messages={messages} isGenerating={isGenerating} />}
         </ChatMessages>
       ) : (
-        <EmptyState config={config} />
+        <EmptyState description={description} examplePrompts={examplePrompts} />
       )}
       <ChatInput allowFiles={allowFiles} allowImages={allowImages} />
     </ChatContainer>
@@ -231,6 +230,8 @@ export function Agent({
   allowFiles = true,
   allowImages = true,
   onChatCreated,
+  description,
+  examplePrompts,
 }: AgentProps) {
   // Create client internally - memoized to prevent re-creation
   const client = useMemo(() => {
@@ -245,10 +246,9 @@ export function Agent({
     return null;
   }
 
-  if (!isAdHocConfig(config)) {
-    console.warn('[Agent] Template configs not yet supported. Use AgentProvider with primitives instead.');
-    return null;
-  }
+  // Extract description and example prompts from ad-hoc config, or use props
+  const effectiveDescription = description ?? (isAdHocConfig(config) ? config.description : undefined);
+  const effectiveExamplePrompts = examplePrompts ?? (isAdHocConfig(config) ? config.example_prompts : undefined);
 
   return (
     <AgentProvider
@@ -259,11 +259,12 @@ export function Agent({
       onChatCreated={onChatCreated}
     >
       <AgentContent
-        config={config}
         className={className}
         compact={compact}
         allowFiles={allowFiles}
         allowImages={allowImages}
+        description={effectiveDescription}
+        examplePrompts={effectiveExamplePrompts}
       />
     </AgentProvider>
   );

@@ -145,6 +145,10 @@ export interface AgentProps {
     allowImages?: boolean;
     /** Callback when chat is created */
     onChatCreated?: (chatId: string) => void;
+    /** Description for empty state (used with template configs) */
+    description?: string;
+    /** Example prompts for empty state (used with template configs) */
+    examplePrompts?: string[];
 }
 
 export interface ChatMessagesProps {
