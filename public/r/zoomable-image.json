@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "zoomable-image",
+  "type": "registry:block",
+  "title": "Zoomable Image",
+  "description": "Click-to-zoom image component with medium.com-style lightbox.",
+  "dependencies": [
+    "react-medium-image-zoom"
+  ],
+  "files": [
+    {
+      "path": "registry/blocks/zoomable-image/zoomable-image.tsx",
+      "content": "\"use client\"\n\nimport Zoom from \"react-medium-image-zoom\"\nimport \"react-medium-image-zoom/dist/styles.css\"\nimport \"./zoomable-image.css\"\nimport { ImageOff } from \"lucide-react\"\nimport { DetailedHTMLProps, ImgHTMLAttributes, useState } from \"react\"\n\nexport interface ZoomableImageProps\n  extends DetailedHTMLProps<ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement> {\n  /** Disable zoom behavior */\n  disabled?: boolean\n  /** Higher quality image src to load when zoomed */\n  zoomSrc?: string\n  /** Offset in pixels from window boundaries when zoomed */\n  zoomMargin?: number\n}\n\nexport default function ZoomableImage({\n  src,\n  alt,\n  className,\n  onLoad,\n  onError,\n  disabled = false,\n  zoomSrc,\n  zoomMargin = 16,\n  ...rest\n}: ZoomableImageProps) {\n  const [hasError, setHasError] = useState(false)\n\n  if (!src) return null\n\n  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {\n    setHasError(true)\n    onError?.(e)\n  }\n\n  if (hasError) {\n    return (\n      <div className=\"aspect-square w-full h-24 flex items-center justify-center rounded-md\">\n        <div className=\"flex flex-col items-center gap-2 text-muted-foreground\">\n          <ImageOff strokeWidth={1} className=\"w-8 h-8\" />\n        </div>\n      </div>\n    )\n  }\n\n  const image = (\n    <img\n      src={src}\n      alt={alt || \"\"}\n      className={className}\n      onLoad={onLoad}\n      onError={handleError}\n      {...rest}\n    />\n  )\n\n  if (disabled) {\n    return image\n  }\n\n  return (\n    <Zoom\n      classDialog=\"zoomable-image-dialog\"\n      zoomMargin={zoomMargin}\n      zoomImg={zoomSrc ? { src: zoomSrc } : undefined}\n    >\n      {image}\n    </Zoom>\n  )\n}\n",
+      "type": "registry:component"
+    },
+    {
+      "path": "registry/blocks/zoomable-image/zoomable-image.css",
+      "content": "/* Scoped styles for zoomable-image using react-medium-image-zoom */\n.zoomable-image-dialog [data-rmiz-modal-overlay=\"hidden\"] {\n  background-color: transparent;\n}\n\n.zoomable-image-dialog [data-rmiz-modal-overlay=\"visible\"] {\n  background-color: var(--background);\n}\n\n.zoomable-image-dialog [data-rmiz-btn-unzoom] {\n  background-color: var(--muted);\n  color: var(--muted-foreground);\n}\n\n.zoomable-image-dialog [data-rmiz-btn-unzoom]:focus-visible {\n  outline-offset: 0.25rem;\n  outline: 0.125rem solid var(--ring);\n}",
+      "type": "registry:style"
+    }
+  ]
+}

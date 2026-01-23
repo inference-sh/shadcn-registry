@@ -1,0 +1,182 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "inferencesh",
+  "homepage": "https://ui.inference.sh",
+  "items": [
+    {
+      "name": "agent",
+      "type": "registry:block",
+      "title": "Agent Chat",
+      "description": "Full-featured AI agent chat with state management, tools, and widgets.",
+      "dependencies": ["@inferencesh/sdk"],
+      "registryDependencies": [
+        "button",
+        "https://ui.inference.sh/r/chat.json",
+        "https://ui.inference.sh/r/tools.json",
+        "https://ui.inference.sh/r/widgets.json"
+      ],
+      "files": [
+        { "path": "registry/blocks/agent/agent.tsx", "type": "registry:component", "target": "components/agent/agent.tsx" },
+        { "path": "registry/blocks/agent/provider.tsx", "type": "registry:component", "target": "components/agent/provider.tsx" },
+        { "path": "registry/blocks/agent/context.tsx", "type": "registry:component", "target": "components/agent/context.tsx" },
+        { "path": "registry/blocks/agent/types.ts", "type": "registry:lib", "target": "components/agent/types.ts" },
+        { "path": "registry/blocks/agent/hooks/use-agent.ts", "type": "registry:hook", "target": "hooks/use-agent.ts" },
+        { "path": "registry/blocks/agent/internal/reducer.ts", "type": "registry:lib", "target": "components/agent/lib/reducer.ts" },
+        { "path": "registry/blocks/agent/internal/actions.ts", "type": "registry:lib", "target": "components/agent/lib/actions.ts" },
+        { "path": "registry/blocks/agent/lib/tool-builder.ts", "type": "registry:lib", "target": "components/agent/lib/tool-builder.ts" }
+      ]
+    },
+    {
+      "name": "chat",
+      "type": "registry:block",
+      "title": "Chat UI Primitives",
+      "description": "Visual building blocks: chat container, messages, input, and status indicators.",
+      "registryDependencies": [
+        "button", "scroll-area", "textarea", "tooltip", "spinner", "command", "popover",
+        "https://ui.inference.sh/r/markdown.json"
+      ],
+      "files": [
+        { "path": "registry/blocks/chat/components/chat-container.tsx", "type": "registry:component", "target": "components/agent/chat-container.tsx" },
+        { "path": "registry/blocks/chat/components/chat-input.tsx", "type": "registry:component", "target": "components/agent/chat-input.tsx" },
+        { "path": "registry/blocks/chat/components/chat-messages.tsx", "type": "registry:component", "target": "components/agent/chat-messages.tsx" },
+        { "path": "registry/blocks/chat/components/message.tsx", "type": "registry:component", "target": "components/agent/message.tsx" },
+        { "path": "registry/blocks/chat/components/message-bubble.tsx", "type": "registry:component", "target": "components/agent/message-bubble.tsx" },
+        { "path": "registry/blocks/chat/components/message-content.tsx", "type": "registry:component", "target": "components/agent/message-content.tsx" },
+        { "path": "registry/blocks/chat/components/message-reasoning.tsx", "type": "registry:component", "target": "components/agent/message-reasoning.tsx" },
+        { "path": "registry/blocks/chat/components/message-status-indicator.tsx", "type": "registry:component", "target": "components/agent/message-status-indicator.tsx" },
+        { "path": "registry/blocks/chat/components/file-upload.tsx", "type": "registry:component", "target": "components/agent/file-upload.tsx" },
+        { "path": "registry/blocks/chat/lib/use-auto-scroll.ts", "type": "registry:hook", "target": "hooks/use-auto-scroll.ts" }
+      ]
+    },
+    {
+      "name": "tools",
+      "type": "registry:block",
+      "title": "Tool Invocation UI",
+      "description": "Displays tool lifecycle: pending, in-progress, approval, and results.",
+      "registryDependencies": [
+        "badge", "button", "card", "collapsible", "spinner",
+        "https://ui.inference.sh/r/widgets.json",
+        "https://ui.inference.sh/r/task.json"
+      ],
+      "files": [
+        { "path": "registry/blocks/tools/tool-invocation.tsx", "type": "registry:component", "target": "components/agent/tool-invocation.tsx" },
+        { "path": "registry/blocks/tools/tool-invocations.tsx", "type": "registry:component", "target": "components/agent/tool-invocations.tsx" }
+      ]
+    },
+    {
+      "name": "task",
+      "type": "registry:block",
+      "title": "Task",
+      "description": "Real-time task display with streaming support, status indicators, and logs viewer.",
+      "dependencies": ["@inferencesh/sdk"],
+      "registryDependencies": [
+        "button", "card", "label", "tooltip", "spinner",
+        "https://ui.inference.sh/r/markdown.json"
+      ],
+      "files": [
+        { "path": "registry/blocks/task/task-output.tsx", "type": "registry:component", "target": "components/task/task-output.tsx" },
+        { "path": "registry/blocks/task/task-output-wrapper.tsx", "type": "registry:component", "target": "components/task/task-output-wrapper.tsx" },
+        { "path": "registry/blocks/task/task-status.tsx", "type": "registry:component", "target": "components/task/task-status.tsx" },
+        { "path": "registry/blocks/task/task-logs.tsx", "type": "registry:component", "target": "components/task/task-logs.tsx" },
+        { "path": "registry/blocks/task/output-fields.tsx", "type": "registry:component", "target": "components/task/output-fields.tsx" },
+        { "path": "registry/blocks/task/file-preview.tsx", "type": "registry:component", "target": "components/task/file-preview.tsx" },
+        { "path": "registry/blocks/task/time-since.tsx", "type": "registry:component", "target": "components/task/time-since.tsx" },
+        { "path": "registry/blocks/task/use-task.ts", "type": "registry:hook", "target": "hooks/use-task.ts" },
+        { "path": "registry/blocks/task/index.ts", "type": "registry:lib", "target": "components/task/index.ts" }
+      ]
+    },
+    {
+      "name": "widgets",
+      "type": "registry:block",
+      "title": "Widget Renderer",
+      "description": "Renders declarative UI nodes (forms, buttons, cards) from agent tool outputs.",
+      "registryDependencies": [
+        "badge", "button", "card", "checkbox", "input", "label", "select", "textarea",
+        "https://ui.inference.sh/r/markdown.json"
+      ],
+      "files": [
+        { "path": "registry/blocks/widgets/widget-renderer.tsx", "type": "registry:component", "target": "components/agent/widget-renderer.tsx" },
+        { "path": "registry/blocks/widgets/types.ts", "type": "registry:lib", "target": "components/agent/widget-types.ts" }
+      ]
+    },
+    {
+      "name": "markdown",
+      "type": "registry:block",
+      "title": "Markdown Renderer",
+      "description": "High-fidelity markdown with code blocks, YouTube embeds, and zoomable images.",
+      "dependencies": ["react-markdown", "remark-gfm"],
+      "registryDependencies": [
+        "https://ui.inference.sh/r/code-block.json",
+        "https://ui.inference.sh/r/youtube-embed.json",
+        "https://ui.inference.sh/r/zoomable-image.json"
+      ],
+      "files": [
+        { "path": "registry/blocks/markdown/markdown-renderer.tsx", "type": "registry:component" },
+        { "path": "registry/blocks/markdown/lib/helpers.ts", "type": "registry:lib", "target": "lib/markdown-helpers.ts" }
+      ]
+    },
+    {
+      "name": "code-block",
+      "type": "registry:block",
+      "title": "Code Block",
+      "description": "Syntax-highlighted code block with line numbers and copy button.",
+      "files": [
+        { "path": "registry/blocks/code-block/code-block.tsx", "type": "registry:component", "target": "components/code-block/code-block.tsx" },
+        { "path": "registry/blocks/code-block/index.ts", "type": "registry:lib", "target": "components/code-block/index.ts" },
+        { "path": "registry/blocks/code-block/lib/types.ts", "type": "registry:lib", "target": "components/code-block/types.ts" },
+        { "path": "registry/blocks/code-block/lib/languages.ts", "type": "registry:lib", "target": "components/code-block/languages.ts" },
+        { "path": "registry/blocks/code-block/lib/tokenizer.ts", "type": "registry:lib", "target": "components/code-block/tokenizer.ts" },
+        { "path": "registry/blocks/code-block/lib/styles.ts", "type": "registry:lib", "target": "components/code-block/styles.ts" },
+        { "path": "registry/blocks/code-block/lib/utils.ts", "type": "registry:lib", "target": "components/code-block/utils.ts" }
+      ]
+    },
+    {
+      "name": "youtube-embed",
+      "type": "registry:block",
+      "title": "YouTube Embed",
+      "description": "Responsive YouTube video embed with loading state.",
+      "files": [
+        { "path": "registry/blocks/youtube-embed/youtube-embed.tsx", "type": "registry:component" }
+      ]
+    },
+    {
+      "name": "zoomable-image",
+      "type": "registry:block",
+      "title": "Zoomable Image",
+      "description": "Click-to-zoom image component with medium.com-style lightbox.",
+      "dependencies": ["react-medium-image-zoom"],
+      "files": [
+        { "path": "registry/blocks/zoomable-image/zoomable-image.tsx", "type": "registry:component" },
+        { "path": "registry/blocks/zoomable-image/zoomable-image.css", "type": "registry:style" }
+      ]
+    },
+    {
+      "name": "steps",
+      "type": "registry:block",
+      "title": "Steps",
+      "description": "Numbered step component with connecting line for sequential instructions.",
+      "files": [
+        { "path": "registry/blocks/steps/steps.tsx", "type": "registry:component" },
+        { "path": "registry/blocks/steps/index.ts", "type": "registry:lib", "target": "lib/steps.ts" }
+      ]
+    },
+    {
+      "name": "sidebar-light",
+      "type": "registry:block",
+      "title": "Sidebar Light",
+      "description": "Lightweight sidebar navigation with nested items and active state.",
+      "files": [
+        { "path": "registry/blocks/sidebar-light/sidebar-light.tsx", "type": "registry:component" }
+      ]
+    },
+    {
+      "name": "table-of-contents",
+      "type": "registry:block",
+      "title": "Table of Contents",
+      "description": "Auto-scrolling table of contents with intersection observer for active section.",
+      "files": [
+        { "path": "registry/blocks/table-of-contents/table-of-contents.tsx", "type": "registry:component" }
+      ]
+    }
+  ]
+}

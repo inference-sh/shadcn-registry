@@ -1,0 +1,18 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "typing-indicator",
+  "type": "registry:component",
+  "title": "Typing Indicator",
+  "description": "A loading indicator for chat interfaces showing the assistant is thinking.",
+  "registryDependencies": [
+    "https://ui.inference.sh/r/spinner.json"
+  ],
+  "files": [
+    {
+      "path": "registry/inferencesh/ui/typing-indicator.tsx",
+      "content": "import { cn } from \"@/lib/utils\"\nimport { Spinner } from \"@/registry/inferencesh/ui/spinner\"\n\ninterface TypingIndicatorProps {\n  className?: string\n  text?: string\n}\n\nfunction TypingIndicator({ className, text = \"thinking...\" }: TypingIndicatorProps) {\n  return (\n    <div className={cn(\"flex items-center gap-2 text-muted-foreground\", className)}>\n      <Spinner className=\"size-4\" />\n      <span className=\"text-sm\">{text}</span>\n    </div>\n  )\n}\n\nexport { TypingIndicator }\n",
+      "type": "registry:component",
+      "target": "components/agent/typing-indicator.tsx"
+    }
+  ]
+}

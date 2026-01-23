@@ -1,0 +1,482 @@
+/**
+ * ToolInvocation Primitive
+ * 
+ * Displays a single tool invocation with collapsible details, widget support,
+ * and task output for app tools.
+ */
+
+import React, { memo, useState, useMemo, useCallback } from 'react';
+import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { MessageCircleCode, CheckCircle2, XCircle, Clock, AlertCircle, CheckCircle, CircleDashed } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import {
+  ToolInvocationStatusPending,
+  ToolInvocationStatusInProgress,
+  ToolInvocationStatusAwaitingInput,
+  ToolInvocationStatusAwaitingApproval,
+  ToolInvocationStatusCompleted,
+  ToolInvocationStatusFailed,
+  ToolInvocationStatusCancelled,
+  ToolTypeApp,
+} from '@inferencesh/sdk';
+import {
+  ToolFinishStatusSucceeded,
+  ToolFinishStatusFailed,
+  ToolFinishStatusCancelled,
+} from '@/components/agent/types';
+import type { ToolFinish, WidgetAction, WidgetFormData } from '@/components/agent/types';
+import { WidgetRenderer } from '@/components/agent/widget-renderer'
+import { parseWidget } from '@/components/agent/widget-types';
+import { TaskOutputWrapper } from '@/components/task/task-output-wrapper';
+import { useAgentActions } from '@/hooks/use-agent';
+import type { ToolInvocationProps } from '@/components/agent/types';
+
+// ============================================================================
+// Finish Block - Special display for finish tool marking end of chat
+// ============================================================================
+
+const FinishBlock = memo(function FinishBlock({
+  finish,
+  isActive = false,
+}: {
+  finish?: ToolFinish | null
+  isActive?: boolean
+}) {
+  const getStatusIcon = () => {
+    if (isActive) {
+      return <Spinner className="size-3.5" />
+    }
+    switch (finish?.status) {
+      case ToolFinishStatusSucceeded:
+        return <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+      case ToolFinishStatusFailed:
+        return <XCircle className="h-3.5 w-3.5 text-red-400" />
+      case ToolFinishStatusCancelled:
+        return <CircleDashed className="h-3.5 w-3.5 text-muted-foreground" />
+      default:
+        return <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+    }
+  }
+
+  const getStatusText = () => {
+    if (isActive) return 'finishing'
+    switch (finish?.status) {
+      case ToolFinishStatusSucceeded:
+        return 'completed'
+      case ToolFinishStatusFailed:
+        return 'failed'
+      case ToolFinishStatusCancelled:
+        return 'cancelled'
+      default:
+        return 'completed'
+    }
+  }
+
+  const getLineColor = () => {
+    switch (finish?.status) {
+      case ToolFinishStatusFailed:
+        return 'bg-red-400/30'
+      case ToolFinishStatusCancelled:
+        return 'bg-muted-foreground/30'
+      default:
+        return 'bg-muted-foreground/20'
+    }
+  }
+
+  const resultMessage = finish?.result && typeof finish.result === 'string' && !isActive
+    ? finish.result.toLowerCase()
+    : null;
+
+  return (
+    <div className="my-6 w-full">
+      <div className="flex items-center gap-4 w-full">
+        <div className={cn("flex-1 h-px", getLineColor())} />
+        <div className={cn(
+          "flex items-center gap-2 text-muted-foreground/50",
+          isActive && "animate-pulse"
+        )}>
+          {getStatusIcon()}
+          <span className="text-xs font-medium">
+            {getStatusText()}
+          </span>
+        </div>
+        <div className={cn("flex-1 h-px", getLineColor())} />
+      </div>
+      {resultMessage && (
+        <p className="text-xs text-muted-foreground/40 text-center mt-2 break-words">
+          {resultMessage}
+        </p>
+      )}
+    </div>
+  )
+})
+
+/**
+ * ToolInvocation - Single tool call display with widget and task output support
+ * 
+ * @example
+ * ```tsx
+ * <ToolInvocation invocation={toolInvocation} />
+ * ```
+ */
+export const ToolInvocation = memo(function ToolInvocation({
+  invocation,
+  className,
+  defaultOpen = false,
+}: ToolInvocationProps) {
+  // Parse widget from result or data - moved up to check for auto-open
+  const widget = useMemo(() => {
+    // Try to parse from widget field first
+    if (invocation.widget) {
+      return parseWidget(invocation.widget);
+    }
+    // Try to parse from result
+    if (invocation.result) {
+      return parseWidget(invocation.result);
+    }
+    return null;
+  }, [invocation.widget, invocation.result]);
+
+  // Default to open for awaiting approval so users can see what they're approving
+  // Also default to open for widgets so users can see them immediately
+  const isAwaitingApprovalStatus = invocation.status === ToolInvocationStatusAwaitingApproval;
+  const [isOpen, setIsOpen] = useState(defaultOpen || isAwaitingApprovalStatus || !!widget);
+
+  // Get actions: submitToolResult for widgets, approveTool/rejectTool/alwaysAllowTool for HIL approval
+  const { submitToolResult, approveTool, rejectTool, alwaysAllowTool } = useAgentActions();
+
+  // Tool names are now direct (no type prefix) - use as-is
+  const functionName = invocation.function?.name || 'tool';
+
+  const status = invocation.status;
+  const isActive =
+    status === ToolInvocationStatusInProgress ||
+    status === ToolInvocationStatusAwaitingInput ||
+    status === ToolInvocationStatusPending;
+
+  // Check if this is an app tool with an execution_id (task)
+  const isAppTool = invocation.type === ToolTypeApp;
+
+  // Try to get task ID from execution_id, or parse from result as fallback
+  const taskId = useMemo(() => {
+    // First try the execution_id field
+    if (invocation.execution_id) {
+      return invocation.execution_id;
+    }
+    // Fallback: try to parse task ID from result text
+    // Result format: "Task {task_id} {app_name} completed with output: ..."
+    if (isAppTool && typeof invocation.result === 'string') {
+      const match = invocation.result.match(/^Task\s+([a-z0-9]+)\s+/);
+      if (match) {
+        return match[1];
+      }
+    }
+    return null;
+  }, [invocation.execution_id, invocation.result, isAppTool]);
+
+  const hasTaskOutput = isAppTool && taskId;
+
+  // Check if this is a finish tool - render with special FinishBlock component
+  const isFinishTool = functionName === 'finish';
+
+  // Parse finish data from invocation.data (where backend stores ToolFinish)
+  const finishData = useMemo((): ToolFinish | null => {
+    if (!isFinishTool) return null;
+
+    // Try to parse from data field (where backend stores structured ToolFinish)
+    if (invocation.data) {
+      try {
+        // data might be a string or already parsed object
+        const data = typeof invocation.data === 'string'
+          ? JSON.parse(invocation.data)
+          : invocation.data;
+        // Check if it looks like a ToolFinish (has status field)
+        if (data && typeof data.status === 'string') {
+          return data as ToolFinish;
+        }
+      } catch {
+        // Not valid JSON or not a ToolFinish
+      }
+    }
+
+    // Fallback: try to parse from arguments (for in-progress invocations)
+    if (invocation.function?.arguments) {
+      const args = invocation.function.arguments;
+      if (args.status && typeof args.status === 'string') {
+        return {
+          status: args.status as string,
+          result: args.result as string | undefined,
+        };
+      }
+    }
+
+    return null;
+  }, [isFinishTool, invocation.data, invocation.function?.arguments]);
+
+
+  const statusIcon = useMemo(() => {
+    switch (status) {
+      case ToolInvocationStatusPending:
+      case ToolInvocationStatusInProgress:
+        return <Spinner className="size-3" />;
+      case ToolInvocationStatusAwaitingInput:
+      case ToolInvocationStatusAwaitingApproval:
+        return <Clock className="h-3 w-3" />;
+      case ToolInvocationStatusCompleted:
+        return <CheckCircle2 className="h-3 w-3 text-emerald-400" />;
+      case ToolInvocationStatusFailed:
+        return <AlertCircle className="h-3 w-3 text-red-400" />;
+      case ToolInvocationStatusCancelled:
+        return <XCircle className="h-3 w-3 text-muted-foreground" />;
+      default:
+        return <MessageCircleCode className="h-3 w-3" />;
+    }
+  }, [status]);
+
+  const statusText = useMemo(() => {
+    switch (status) {
+      case ToolInvocationStatusPending:
+        return 'pending';
+      case ToolInvocationStatusInProgress:
+        return 'running';
+      case ToolInvocationStatusAwaitingInput:
+        return 'awaiting input';
+      case ToolInvocationStatusAwaitingApproval:
+        return 'awaiting approval';
+      case ToolInvocationStatusCompleted:
+        return 'completed';
+      case ToolInvocationStatusFailed:
+        return 'failed';
+      case ToolInvocationStatusCancelled:
+        return 'cancelled';
+      default:
+        return '';
+    }
+  }, [status]);
+
+
+  // Handle widget actions (for approval buttons, form submissions, etc.)
+  const handleWidgetAction = useCallback(async (action: WidgetAction, formData?: WidgetFormData) => {
+    if (!submitToolResult) return;
+
+    try {
+      await submitToolResult(invocation.id, JSON.stringify({ action, form_data: formData }));
+    } catch (error) {
+      console.error('[ToolInvocation] Failed to submit widget action:', error);
+    }
+  }, [invocation.id, submitToolResult]);
+
+  // Handle approve/reject for HIL approval (separate from widget submission)
+  const handleApprove = useCallback(async () => {
+    try {
+      await approveTool(invocation.id);
+    } catch (error) {
+      console.error('[ToolInvocation] Failed to approve:', error);
+    }
+  }, [invocation.id, approveTool]);
+
+  const handleReject = useCallback(async () => {
+    try {
+      await rejectTool(invocation.id);
+    } catch (error) {
+      console.error('[ToolInvocation] Failed to reject:', error);
+    }
+  }, [invocation.id, rejectTool]);
+
+  const handleAlwaysAllow = useCallback(async () => {
+    try {
+      await alwaysAllowTool(invocation.id, functionName);
+    } catch (error) {
+      console.error('[ToolInvocation] Failed to always-allow:', error);
+    }
+  }, [invocation.id, functionName, alwaysAllowTool]);
+
+  const hasArgs =
+    invocation.function?.arguments &&
+    Object.keys(invocation.function.arguments).length > 0;
+  // Note: hasResult only applies when there's no widget (widgets are handled separately)
+  const hasResult = !!invocation.result && !widget && !hasTaskOutput;
+
+  // Widget is interactive only when awaiting input
+  const isWidgetInteractive = status === ToolInvocationStatusAwaitingInput;
+
+  // For finish tool with standard schema (has status field), use custom FinishBlock
+  // For custom output schemas, fall through to widget rendering
+  if (isFinishTool && (finishData || isActive)) {
+    return (
+      <FinishBlock
+        finish={finishData}
+        isActive={isActive}
+      />
+    );
+  }
+
+  // For awaiting approval, show approval UI
+  if (isAwaitingApprovalStatus) {
+    // If there's a widget, use it
+    if (widget) {
+      return (
+        <div className={cn('flex flex-col items-start', className)}>
+          <WidgetRenderer
+            widget={widget}
+            onAction={handleWidgetAction}
+            className="max-w-md"
+          />
+        </div>
+      );
+    }
+
+    // Otherwise show default approval UI with buttons in footer
+    return (
+      <div className={cn('flex flex-col items-start', className)}>
+        <div className="overflow-hidden rounded border bg-muted/10">
+          {/* Header */}
+          <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground">
+            {statusIcon}
+            <span className="lowercase">
+              {functionName} {statusText}
+            </span>
+          </div>
+
+          {/* Arguments */}
+          {hasArgs && (
+            <div className="border-t px-2 py-1.5 text-xs">
+              <div className="text-muted-foreground/50 mb-1">arguments:</div>
+              <pre className="text-muted-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
+                {JSON.stringify(invocation.function?.arguments, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Footer with action buttons */}
+          <div className="flex items-center justify-end gap-2 border-t px-2 py-1.5">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={handleReject}
+            >
+              skip
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs text-emerald-400 hover:text-emerald-400/80 hover:bg-emerald-400/10"
+              onClick={handleApprove}
+            >
+              allow
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs text-blue-400 hover:text-blue-400/80 hover:bg-blue-400/10"
+              onClick={handleAlwaysAllow}
+            >
+              always allow
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For app tools with task output, show the TaskOutputWrapper
+  if (hasTaskOutput) {
+    return (
+      <div className={cn('flex flex-col items-start', className)}>
+        <Collapsible
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          className={cn(
+            'group w-full overflow-hidden rounded text-muted-foreground',
+            isOpen && 'border bg-muted/10'
+          )}
+        >
+          <div className="flex items-center px-1 py-0.5">
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground cursor-pointer">
+                {statusIcon}
+                <span className={cn('lowercase', isActive && 'animate-pulse')}>
+                  {functionName} {statusText}
+                </span>
+              </button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent>
+            <div className="border-t p-2">
+              <TaskOutputWrapper taskId={taskId!} compact={true} />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+
+  // When not interactive (completed/failed), widget will be disabled with no actions
+  if (widget) {
+    return (
+      <div className={cn('flex flex-col items-start flex-grow-0', className)}>
+        <WidgetRenderer
+          widget={widget}
+          onAction={handleWidgetAction}
+          disabled={!isWidgetInteractive}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('flex flex-col items-start w-fit', className)}>
+      <Collapsible
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className={cn(
+          'group w-full overflow-hidden rounded text-muted-foreground',
+          isOpen && 'border bg-muted/10'
+        )}
+      >
+        <div className="flex items-center px-1 py-0.5">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground cursor-pointer">
+              {statusIcon}
+              <span className={cn('lowercase', isActive && 'animate-pulse')}>
+                {functionName} {statusText}
+              </span>
+            </button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent>
+          <div className="border-t px-2 py-1.5 text-xs space-y-1.5">
+            {hasArgs && (
+              <div>
+                <div className="text-muted-foreground/50 mb-1">arguments:</div>
+                <pre className="text-muted-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
+                  {JSON.stringify(invocation.function?.arguments, null, 2)}
+                </pre>
+              </div>
+            )}
+            {/* Render raw result (widgets are handled separately above) */}
+            {hasResult && (
+              <div>
+                <div className="text-muted-foreground/50 mb-1">result:</div>
+                <pre className="text-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
+                  {typeof invocation.result === 'string'
+                    ? invocation.result
+                    : JSON.stringify(invocation.result, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+});
+
+ToolInvocation.displayName = 'ToolInvocation';

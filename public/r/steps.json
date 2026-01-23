@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "steps",
+  "type": "registry:block",
+  "title": "Steps",
+  "description": "Numbered step component with connecting line for sequential instructions.",
+  "files": [
+    {
+      "path": "registry/blocks/steps/steps.tsx",
+      "content": "import * as React from \"react\"\nimport { cn } from \"@/lib/utils\"\n\ninterface StepsProps extends React.HTMLAttributes<HTMLDivElement> {\n  children: React.ReactNode\n}\n\nfunction Steps({ className, children, ...props }: StepsProps) {\n  // Count Step children and inject step numbers\n  let stepIndex = 0\n  const childrenWithNumbers = React.Children.map(children, (child) => {\n    if (\n      React.isValidElement(child) &&\n      (child.type as React.FC)?.displayName === \"Step\"\n    ) {\n      stepIndex++\n      return React.cloneElement(child as React.ReactElement<StepInternalProps>, {\n        _stepNumber: stepIndex,\n      })\n    }\n    return child\n  })\n\n  return (\n    <div className={cn(\"flex flex-col\", className)} {...props}>\n      {childrenWithNumbers}\n    </div>\n  )\n}\n\ninterface StepInternalProps extends React.HTMLAttributes<HTMLDivElement> {\n  children: React.ReactNode\n  _stepNumber?: number\n}\n\nfunction Step({ className, children, _stepNumber, ...props }: StepInternalProps) {\n  return (\n    <div className={cn(\"grid grid-cols-[auto_1fr] gap-4\", className)} {...props}>\n      {/* Left column: number + line */}\n      <div className=\"flex flex-col items-center\">\n        <div className=\"flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground\">\n          {_stepNumber}\n        </div>\n        <div className=\"my-2 w-px flex-1 bg-border\" />\n      </div>\n      {/* Right column: content */}\n      <div>\n        {children}\n      </div>\n    </div>\n  )\n}\nStep.displayName = \"Step\"\n\ninterface StepTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {\n  children: React.ReactNode\n}\n\nfunction StepTitle({ className, children, ...props }: StepTitleProps) {\n  return (\n    <h3\n      className={cn(\"text-base font-medium leading-6 tracking-tight\", className)}\n      {...props}\n    >\n      {children}\n    </h3>\n  )\n}\n\ninterface StepContentProps extends React.HTMLAttributes<HTMLDivElement> {\n  children: React.ReactNode\n}\n\nfunction StepContent({ className, children, ...props }: StepContentProps) {\n  return (\n    <div className={cn(\"mt-2\", className)} {...props}>\n      {children}\n    </div>\n  )\n}\n\nexport { Steps, Step, StepTitle, StepContent }\n",
+      "type": "registry:component"
+    },
+    {
+      "path": "registry/blocks/steps/index.ts",
+      "content": "export { Steps, Step, StepTitle, StepContent } from \"./steps\"\n",
+      "type": "registry:lib",
+      "target": "lib/steps.ts"
+    }
+  ]
+}
