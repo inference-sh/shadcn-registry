@@ -58,7 +58,7 @@ export type AgentOptions = AdHocAgentConfig | TemplateAgentConfig;
  * Type guard for ad-hoc config
  */
 export function isAdHocConfig(config: AgentOptions): config is AdHocAgentConfig {
-    return 'core_app_ref' in config;
+    return 'core_app' in config;
 }
 
 /**

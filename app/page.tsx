@@ -25,7 +25,7 @@ export const { GET, POST, PUT } = route;`
 const usageCode = `<Agent
   proxyUrl="/api/inference/proxy"
   agentConfig={{
-    core_app_ref: 'openrouter/claude-haiku-45@0fkg6xwb',
+    core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
     description: 'a helpful ai assistant',
     system_prompt: 'you are helpful.',
   }}

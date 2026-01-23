@@ -32,7 +32,7 @@
  * @example Internal tools config
  * ```typescript
  * const config = {
- *   core_app_ref: '...',
+ *   core_app: { ref: '...' },
  *   internal_tools: internalTools()
  *     .plan()
  *     .memory()

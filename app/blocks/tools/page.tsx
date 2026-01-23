@@ -152,7 +152,7 @@ function ToolInvocationDemo({ invocation, defaultOpen = false }: { invocation: P
     <AgentProvider
       client={mockClient}
       config={{
-        core_app_ref: 'demo/mock@demo',
+        core_app: { ref: 'demo/mock@demo' },
         description: 'Demo agent',
       }}
     >
@@ -171,7 +171,7 @@ function TaskOutputWrapperDemo({ taskId, compact = false }: { taskId: string; co
     <AgentProvider
       client={client}
       config={{
-        core_app_ref: 'demo/mock@demo',
+        core_app: { ref: 'demo/mock@demo' },
         description: 'Demo agent',
       }}
     >

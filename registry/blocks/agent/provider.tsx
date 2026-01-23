@@ -18,9 +18,9 @@ import type { AgentProviderProps, AgentOptions, AgentUIStatus, ClientToolHandler
  * ```tsx
  * const client = new Inference({ proxyUrl: '/api/inference/proxy' });
  * 
- * <AgentProvider 
+ * <AgentProvider
  *   client={client}
- *   agentConfig={{ core_app_ref: 'openrouter/claude-sonnet-4@abc123' }}
+ *   agentConfig={{ core_app: { ref: 'openrouter/claude-sonnet-4@abc123' } }}
  * >
  *   <MyChatUI />
  * </AgentProvider>

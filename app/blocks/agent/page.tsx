@@ -269,7 +269,7 @@ You are helping users configure a SaaS pricing plan. The form contains:
               allowFiles={false}
               allowImages={false}
               config={{
-                core_app_ref: 'openrouter/claude-haiku-45@0fkg6xwb',
+                core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
                 description: 'I can help configure your pricing plan',
                 system_prompt: systemPrompt,
                 tools: scopedTools,
@@ -392,7 +392,7 @@ function PricingAssistantDemo() {
         proxyUrl="/api/inference/proxy"
         name="pricing-assistant"
         config={{
-          core_app_ref: 'openrouter/claude-haiku-45@0fkg6xwb',
+          core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
           description: 'I can help configure your pricing plan',
           system_prompt: systemPrompt,
           tools: scopedTools,
@@ -740,7 +740,7 @@ export function ChatAssistant() {
     <Agent
       proxyUrl="/api/inference/proxy"
       agentConfig={{
-        core_app_ref: 'openrouter/claude-haiku-45@0fkg6xwb',
+        core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
         description: 'A helpful AI assistant',
         system_prompt: 'You are helpful and concise.',
         example_prompts: [
@@ -773,7 +773,7 @@ function MyAssistant() {
   const client = useMemo(() => new Inference({ proxyUrl: '/api/inference/proxy' }), [])
 
   const agentConfig = {
-    core_app_ref: 'openrouter/claude-haiku-45@0fkg6xwb',
+    core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
     system_prompt: FORM_ASSISTANT_PROMPT,
     tools: scopedTools, // Client-side tools that can interact with the DOM
   }
