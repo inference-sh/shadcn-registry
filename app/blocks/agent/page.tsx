@@ -711,7 +711,7 @@ export function ChatAssistant() {
 }`}
           </CodeBlock>
           <p className="text-sm text-muted-foreground mt-6 mb-4">
-            For more control, use the AgentProvider with custom chat components and client-side tools:
+            for more control, use the AgentProvider with custom chat components and client-side tools:
           </p>
           <CodeBlock language="tsx">
             {`import { useRef, useMemo } from 'react'
