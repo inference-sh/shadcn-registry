@@ -15,7 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
@@ -23,34 +23,92 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@/components/agent/types": ["./registry/blocks/agent/types"],
-      "@/components/agent/context": ["./registry/blocks/agent/context"],
-      "@/components/agent/provider": ["./registry/blocks/agent/provider"],
-      "@/components/agent/agent": ["./registry/blocks/agent/agent"],
-      "@/components/agent/lib/*": ["./registry/blocks/agent/internal/*", "./registry/blocks/agent/lib/*"],
-      "@/components/agent/chat-container": ["./registry/blocks/chat/components/chat-container"],
-      "@/components/agent/chat-input": ["./registry/blocks/chat/components/chat-input"],
-      "@/components/agent/chat-messages": ["./registry/blocks/chat/components/chat-messages"],
-      "@/components/agent/message": ["./registry/blocks/chat/components/message"],
-      "@/components/agent/message-bubble": ["./registry/blocks/chat/components/message-bubble"],
-      "@/components/agent/message-content": ["./registry/blocks/chat/components/message-content"],
-      "@/components/agent/message-reasoning": ["./registry/blocks/chat/components/message-reasoning"],
-      "@/components/agent/message-status-indicator": ["./registry/blocks/chat/components/message-status-indicator"],
-      "@/components/agent/file-upload": ["./registry/blocks/chat/components/file-upload"],
-      "@/components/agent/tool-invocation": ["./registry/blocks/tools/tool-invocation"],
-      "@/components/agent/tool-invocations": ["./registry/blocks/tools/tool-invocations"],
-      "@/components/agent/widget-renderer": ["./registry/blocks/widgets/widget-renderer"],
-      "@/components/agent/widget-types": ["./registry/blocks/widgets/types"],
-      "@/components/task/*": ["./registry/blocks/task/*"],
-      "@/components/code-block/*": ["./registry/blocks/code-block/*", "./registry/blocks/code-block/lib/*"],
-      "@/components/markdown-renderer": ["./registry/blocks/markdown/markdown-renderer"],
-      "@/components/zoomable-image": ["./registry/blocks/zoomable-image/zoomable-image"],
-      "@/components/youtube-embed": ["./registry/blocks/youtube-embed/youtube-embed"],
-      "@/hooks/use-agent": ["./registry/blocks/agent/hooks/use-agent"],
-      "@/hooks/use-task": ["./registry/blocks/task/use-task"],
-      "@/hooks/use-auto-scroll": ["./registry/blocks/chat/lib/use-auto-scroll"],
-      "@/lib/markdown-helpers": ["./registry/blocks/markdown/lib/helpers"]
+      "@/*": [
+        "./*"
+      ],
+      "@/components/agent/types": [
+        "./registry/blocks/agent/types"
+      ],
+      "@/components/agent/context": [
+        "./registry/blocks/agent/context"
+      ],
+      "@/components/agent/provider": [
+        "./registry/blocks/agent/provider"
+      ],
+      "@/components/agent/agent": [
+        "./registry/blocks/agent/agent"
+      ],
+      "@/components/agent/lib/*": [
+        "./registry/blocks/agent/internal/*",
+        "./registry/blocks/agent/lib/*"
+      ],
+      "@/components/agent/chat-container": [
+        "./registry/blocks/chat/components/chat-container"
+      ],
+      "@/components/agent/chat-input": [
+        "./registry/blocks/chat/components/chat-input"
+      ],
+      "@/components/agent/chat-messages": [
+        "./registry/blocks/chat/components/chat-messages"
+      ],
+      "@/components/agent/message": [
+        "./registry/blocks/chat/components/message"
+      ],
+      "@/components/agent/message-bubble": [
+        "./registry/blocks/chat/components/message-bubble"
+      ],
+      "@/components/agent/message-content": [
+        "./registry/blocks/chat/components/message-content"
+      ],
+      "@/components/agent/message-reasoning": [
+        "./registry/blocks/chat/components/message-reasoning"
+      ],
+      "@/components/agent/message-status-indicator": [
+        "./registry/blocks/chat/components/message-status-indicator"
+      ],
+      "@/components/agent/file-upload": [
+        "./registry/blocks/chat/components/file-upload"
+      ],
+      "@/components/agent/tool-invocation": [
+        "./registry/blocks/tools/tool-invocation"
+      ],
+      "@/components/agent/tool-invocations": [
+        "./registry/blocks/tools/tool-invocations"
+      ],
+      "@/components/agent/widget-renderer": [
+        "./registry/blocks/widgets/widget-renderer"
+      ],
+      "@/components/agent/widget-types": [
+        "./registry/blocks/widgets/types"
+      ],
+      "@/components/task/*": [
+        "./registry/blocks/task/*"
+      ],
+      "@/components/code-block/*": [
+        "./registry/blocks/code-block/*",
+        "./registry/blocks/code-block/lib/*"
+      ],
+      "@/components/markdown-renderer": [
+        "./registry/blocks/markdown/markdown-renderer"
+      ],
+      "@/components/zoomable-image": [
+        "./registry/blocks/zoomable-image/zoomable-image"
+      ],
+      "@/components/youtube-embed": [
+        "./registry/blocks/youtube-embed/youtube-embed"
+      ],
+      "@/hooks/use-agent": [
+        "./registry/blocks/agent/hooks/use-agent"
+      ],
+      "@/hooks/use-task": [
+        "./registry/blocks/task/use-task"
+      ],
+      "@/hooks/use-auto-scroll": [
+        "./registry/blocks/chat/lib/use-auto-scroll"
+      ],
+      "@/lib/markdown-helpers": [
+        "./registry/blocks/markdown/lib/helpers"
+      ]
     }
   },
   "include": [

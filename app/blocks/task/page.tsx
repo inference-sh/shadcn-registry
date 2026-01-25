@@ -3,7 +3,7 @@
 import { PageLayout } from '@/components/page-layout'
 import { TaskOutputWrapper } from '@/registry/blocks/task/task-output-wrapper'
 import { TaskOutput } from '@/registry/blocks/task/task-output'
-import { StatusPill, StatusPillSimple } from '@/registry/blocks/task/task-status'
+import { StatusPillSimple } from '@/registry/blocks/task/task-status'
 import { TimeSince } from '@/registry/blocks/task/time-since'
 import { Inference, TaskStatusCompleted, TaskStatusRunning, TaskStatusFailed, TaskStatusQueued } from '@inferencesh/sdk'
 import type { TaskDTO as Task } from '@inferencesh/sdk'
