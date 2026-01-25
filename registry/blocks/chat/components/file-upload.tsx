@@ -59,11 +59,11 @@ export function useFileUploadManager(): FileUploadManagerState {
       }
 
       const { client } = context;
-      if (!client?.uploadFile) {
+      if (!client?.files?.upload) {
         throw new Error('Client does not support file uploads');
       }
 
-      const result = await client.uploadFile(upload.file);
+      const result = await client.files.upload(upload.file);
 
       if (abortController.signal.aborted) {
         return;

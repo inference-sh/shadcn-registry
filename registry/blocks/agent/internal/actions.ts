@@ -144,12 +144,12 @@ export function createActions(ctx: ActionsContext): ActionsResult {
         if (isAdHocConfig(config)) {
             // Extract just schemas (strip handlers)
             const toolSchemas = config.tools ? extractToolSchemas(config.tools) : undefined;
-            return client.agent({
+            return client.agents.create({
                 ...config,
                 tools: toolSchemas,
             }, { name: agentName });
         } else {
-            return client.agent(config.agent);
+            return client.agents.create(config.agent);
         }
     };
 

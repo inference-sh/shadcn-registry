@@ -97,7 +97,7 @@ export const TaskOutputWrapper = memo(function TaskOutputWrapper({
     } else {
       // Default cancel behavior using client
       try {
-        await client.cancel(taskId);
+        await client.tasks.cancel(taskId);
       } catch (err) {
         onError?.(err instanceof Error ? err : new Error('Failed to cancel task'));
       }
