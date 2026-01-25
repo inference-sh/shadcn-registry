@@ -44,10 +44,8 @@ export interface WidgetNode {
   defaultValue?: string;
   required?: boolean;
   rows?: number;
-  onChangeAction?: WidgetAction;
   options?: { value: string; label: string }[];
   defaultChecked?: boolean;
-  onCheckedChangeAction?: WidgetAction;
   children?: WidgetNode[];
   gap?: number;
   align?: string;

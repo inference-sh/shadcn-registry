@@ -477,22 +477,22 @@ const realWorldExamples: { title: string; description: string; widget: Widget }[
   },
   {
     title: 'task checklist',
-    description: 'interactive to-do list with onCheckedChangeAction',
+    description: 'interactive to-do list with button actions',
     widget: {
       type: 'ui',
       title: 'Today\'s Tasks',
       children: [
         {
           type: 'col', gap: 2, children: [
-            { type: 'checkbox', name: 'task1', label: 'Review pull requests', defaultChecked: true, onCheckedChangeAction: { type: 'toggle-task', payload: { taskId: 1 } } },
-            { type: 'checkbox', name: 'task2', label: 'Deploy to staging', defaultChecked: true, onCheckedChangeAction: { type: 'toggle-task', payload: { taskId: 2 } } },
-            { type: 'checkbox', name: 'task3', label: 'Write documentation', onCheckedChangeAction: { type: 'toggle-task', payload: { taskId: 3 } } },
-            { type: 'checkbox', name: 'task4', label: 'Team standup at 10am', onCheckedChangeAction: { type: 'toggle-task', payload: { taskId: 4 } } },
+            { type: 'checkbox', name: 'task1', label: 'Review pull requests', defaultChecked: true },
+            { type: 'checkbox', name: 'task2', label: 'Deploy to staging', defaultChecked: true },
+            { type: 'checkbox', name: 'task3', label: 'Write documentation' },
+            { type: 'checkbox', name: 'task4', label: 'Team standup at 10am' },
             { type: 'divider' },
             {
               type: 'row', gap: 2, justify: 'end', children: [
                 { type: 'button', label: 'Add Task', variant: 'outline', onClickAction: { type: 'add-task' } },
-                { type: 'button', label: 'Mark All Done', variant: 'default', onClickAction: { type: 'complete-all', loadingBehavior: 'self' } },
+                { type: 'button', label: 'Save Progress', variant: 'default', onClickAction: { type: 'save-tasks', loadingBehavior: 'self' } },
               ]
             },
           ]
@@ -973,7 +973,6 @@ const actionExamples: { title: string; description?: string; widget: Widget }[] 
                     { value: '2', label: '⭐⭐ Poor' },
                     { value: '1', label: '⭐ Very Poor' },
                   ],
-                  onChangeAction: { type: 'rating-changed', handler: 'client' },
                 },
               ]
             },
@@ -1172,7 +1171,7 @@ export default function WidgetsDemoPage() {
         <section id="actions" className="space-y-6">
           <h2 className="text-2xl font-semibold">actions</h2>
           <p className="text-muted-foreground">
-            interactive elements with <code className="text-sm bg-muted px-1 rounded">onClickAction</code>, <code className="text-sm bg-muted px-1 rounded">onChangeAction</code>, and loading states.
+            interactive elements with <code className="text-sm bg-muted px-1 rounded">onClickAction</code> and loading states.
           </p>
           <div className="space-y-4">
             {actionExamples.map((example, idx) => (

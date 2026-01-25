@@ -297,12 +297,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
           name={node.name}
           placeholder={node.placeholder}
           value={(node.name ? formData[node.name] as string : node.defaultValue) ?? node.defaultValue ?? ""}
-          onChange={(e) => {
-            node.name && setFormValue(node.name, e.target.value)
-            if (node.onChangeAction) {
-              onAction(node.onChangeAction, { ...formData, [node.name || '']: e.target.value })
-            }
-          }}
+          onChange={(e) => node.name && setFormValue(node.name, e.target.value)}
           disabled={isDisabled || node.disabled}
           required={node.required}
           className="w-full"
@@ -315,12 +310,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
           name={node.name}
           placeholder={node.placeholder}
           value={(node.name ? formData[node.name] as string : node.defaultValue) ?? node.defaultValue ?? ""}
-          onChange={(e) => {
-            node.name && setFormValue(node.name, e.target.value)
-            if (node.onChangeAction) {
-              onAction(node.onChangeAction, { ...formData, [node.name || '']: e.target.value })
-            }
-          }}
+          onChange={(e) => node.name && setFormValue(node.name, e.target.value)}
           disabled={isDisabled || node.disabled}
           required={node.required}
           rows={node.rows || 3}
@@ -332,12 +322,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
       return (
         <Select
           value={node.name ? (formData[node.name] as string | undefined) : undefined}
-          onValueChange={(value) => {
-            node.name && setFormValue(node.name, value)
-            if (node.onChangeAction) {
-              onAction(node.onChangeAction, { ...formData, [node.name || '']: value })
-            }
-          }}
+          onValueChange={(value) => node.name && setFormValue(node.name, value)}
           disabled={isDisabled || node.disabled}
         >
           <SelectTrigger className="w-full">
@@ -362,12 +347,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
             id={checkboxId}
             checked={isChecked}
             disabled={isDisabled || node.disabled}
-            onCheckedChange={(checked) => {
-              node.name && setFormValue(node.name, !!checked)
-              if (node.onCheckedChangeAction) {
-                onAction(node.onCheckedChangeAction, { ...formData, [node.name || '']: !!checked })
-              }
-            }}
+            onCheckedChange={(checked) => node.name && setFormValue(node.name, !!checked)}
           />
           <Label htmlFor={checkboxId} className={cn("text-sm", (isDisabled || node.disabled) ? "cursor-default" : "cursor-pointer")}>
             {node.label}
@@ -393,12 +373,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
                   name={node.name}
                   value={opt.value}
                   checked={radioValue === opt.value}
-                  onChange={() => {
-                    node.name && setFormValue(node.name, opt.value)
-                    if (node.onChangeAction) {
-                      onAction(node.onChangeAction, { ...formData, [node.name || '']: opt.value })
-                    }
-                  }}
+                  onChange={() => node.name && setFormValue(node.name, opt.value)}
                   disabled={isDisabled || node.disabled}
                   className="h-4 w-4 border-border text-primary focus:ring-ring"
                 />
