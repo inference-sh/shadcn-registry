@@ -24,7 +24,7 @@ import { PageLayout } from "@/components/page-layout"
 import { CodeBlock } from "@/registry/blocks/code-block/code-block"
 import { Steps, Step, StepTitle, StepContent } from "@/registry/blocks/steps/steps"
 import { WidgetRenderer } from "@/registry/blocks/widgets/widget-renderer"
-import type { Widget, WidgetAction, WidgetFormData } from "@/registry/blocks/agent/types"
+import type { Widget, WidgetAction, WidgetFormData } from "@/registry/blocks/widgets/types"
 import type { TocItem } from "@/registry/blocks/table-of-contents/table-of-contents"
 import { cn } from "@/lib/utils"
 

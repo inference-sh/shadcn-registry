@@ -5,13 +5,18 @@
  * Uses render prop pattern for maximum flexibility.
  */
 
-import React, { memo, useState, useLayoutEffect } from 'react';
+import React, { memo, useState, useLayoutEffect, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
-import { useAgent } from '@/hooks/use-agent';
-import type { ChatMessagesProps } from '@/components/agent/types';
+import { useAgentChat, type ChatMessageDTO } from '@inferencesh/sdk/agent';
+
+interface ChatMessagesProps {
+  children: (props: { messages: ChatMessageDTO[] }) => ReactNode;
+  className?: string;
+  scrollToTopPadding?: boolean;
+}
 
 /**
  * ChatMessages - Scrollable message container with render prop
@@ -43,7 +48,7 @@ export const ChatMessages = memo(function ChatMessages({
   className,
   scrollToTopPadding = false,
 }: ChatMessagesProps) {
-  const { messages } = useAgent();
+  const { messages } = useAgentChat();
   const [spacerHeight, setSpacerHeight] = useState(0);
 
   const {

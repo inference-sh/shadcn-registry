@@ -9,10 +9,10 @@ import {
   ToolInvocationStatusAwaitingApproval,
   ToolInvocationStatusCompleted,
   ToolInvocationStatusFailed,
-} from '@/registry/blocks/agent/types'
-import { ToolTypeApp } from '@inferencesh/sdk'
-import { AgentProvider } from '@/registry/blocks/agent/provider'
-import { Inference } from '@inferencesh/sdk'
+  ToolTypeApp,
+  Inference,
+} from '@inferencesh/sdk'
+import { AgentChatProvider } from '@inferencesh/sdk/agent'
 import { useMemo } from 'react'
 import { TaskOutputWrapper } from '@/registry/blocks/task/task-output-wrapper'
 import type { TocItem } from '@/registry/blocks/table-of-contents/table-of-contents'
@@ -149,15 +149,15 @@ function ToolInvocationDemo({ invocation, defaultOpen = false }: { invocation: P
   }, [])
 
   return (
-    <AgentProvider
+    <AgentChatProvider
       client={mockClient}
-      config={{
+      agentConfig={{
         core_app: { ref: 'demo/mock@demo' },
         description: 'Demo agent',
       }}
     >
       <ToolInvocation invocation={invocation as ToolInvocationDTO} defaultOpen={defaultOpen} />
-    </AgentProvider>
+    </AgentChatProvider>
   )
 }
 
@@ -168,15 +168,15 @@ function TaskOutputWrapperDemo({ taskId, compact = false }: { taskId: string; co
   }, [])
 
   return (
-    <AgentProvider
+    <AgentChatProvider
       client={client}
-      config={{
+      agentConfig={{
         core_app: { ref: 'demo/mock@demo' },
         description: 'Demo agent',
       }}
     >
-      <TaskOutputWrapper taskId={taskId} compact={compact} />
-    </AgentProvider>
+      <TaskOutputWrapper client={client} taskId={taskId} compact={compact} />
+    </AgentChatProvider>
   )
 }
 

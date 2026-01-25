@@ -25,17 +25,28 @@ import {
   ToolInvocationStatusCancelled,
   ToolTypeApp,
 } from '@inferencesh/sdk';
-import {
-  ToolFinishStatusSucceeded,
-  ToolFinishStatusFailed,
-  ToolFinishStatusCancelled,
-} from '@/components/agent/types';
-import type { ToolFinish, WidgetAction, WidgetFormData } from '@/components/agent/types';
-import { WidgetRenderer } from '@/components/agent/widget-renderer'
-import { parseWidget } from '@/components/agent/widget-types';
+import { useAgentActions, useAgentClient, type ToolInvocationDTO } from '@inferencesh/sdk/agent';
+import { WidgetRenderer } from '@/components/agent/widget-renderer';
+import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/agent/widget-types';
 import { TaskOutputWrapper } from '@/components/task/task-output-wrapper';
-import { useAgentActions } from '@/hooks/use-agent';
-import type { ToolInvocationProps } from '@/components/agent/types';
+
+// Tool finish constants
+const ToolFinishStatusSucceeded = 'succeeded';
+const ToolFinishStatusFailed = 'failed';
+const ToolFinishStatusCancelled = 'cancelled';
+
+// Types
+interface ToolFinish {
+  status: string;
+  result?: unknown;
+  error?: string;
+}
+
+interface ToolInvocationProps {
+  invocation: ToolInvocationDTO;
+  className?: string;
+  defaultOpen?: boolean;
+}
 
 // ============================================================================
 // Finish Block - Special display for finish tool marking end of chat
@@ -150,6 +161,8 @@ export const ToolInvocation = memo(function ToolInvocation({
 
   // Get actions: submitToolResult for widgets, approveTool/rejectTool/alwaysAllowTool for HIL approval
   const { submitToolResult, approveTool, rejectTool, alwaysAllowTool } = useAgentActions();
+  // Get client for TaskOutputWrapper
+  const client = useAgentClient();
 
   // Tool names are now direct (no type prefix) - use as-is
   const functionName = invocation.function?.name || 'tool';
@@ -410,7 +423,7 @@ export const ToolInvocation = memo(function ToolInvocation({
           </div>
           <CollapsibleContent>
             <div className="border-t p-2">
-              <TaskOutputWrapper taskId={taskId!} compact={true} />
+              <TaskOutputWrapper client={client} taskId={taskId!} compact={true} />
             </div>
           </CollapsibleContent>
         </Collapsible>

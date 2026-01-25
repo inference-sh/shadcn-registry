@@ -4,10 +4,16 @@
  * Styled container for a chat message.
  */
 
-import React, { memo } from 'react';
+import React, { memo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { ChatMessageRoleUser } from '@inferencesh/sdk';
-import type { MessageBubbleProps } from '@/components/agent/types';
+import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
+
+interface MessageBubbleProps {
+  message: ChatMessageDTO;
+  children?: ReactNode;
+  className?: string;
+}
 
 /**
  * MessageBubble - Styled container for messages

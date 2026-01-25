@@ -6,41 +6,29 @@
  * A self-contained component that fetches and streams a task by ID.
  * Combines useTask hook with TaskOutput for easy drop-in usage.
  *
- * Can be used with an explicit client prop, or will try to get the client
- * from AgentContext when used within an AgentProvider.
- *
  * @example
  * ```tsx
  * // With explicit client
  * const client = new Inference({ apiKey: 'your-key' });
  * <TaskOutputWrapper client={client} taskId="abc123" />
  *
- * // Within AgentProvider (client comes from context)
- * <AgentProvider client={client} config={...}>
- *   <TaskOutputWrapper taskId="abc123" />
- * </AgentProvider>
+ * // Within AgentProvider (client comes from context via useAgentClient)
+ * <AgentChatProvider client={client} agentConfig={...}>
+ *   <TaskOutputWrapper client={useAgentClient()} taskId="abc123" />
+ * </AgentChatProvider>
  * ```
  */
 
-import React, { memo, useCallback, useContext } from 'react';
-import type { Inference, TaskDTO as Task } from '@inferencesh/sdk';
+import React, { memo, useCallback } from 'react';
+import type { TaskDTO as Task } from '@inferencesh/sdk';
+import type { AgentClient } from '@inferencesh/sdk/agent';
 import { cn } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
 import { TaskOutput } from '@/components/task/task-output';
 
-// Import AgentContext for optional client retrieval
-// This makes the component work within AgentProvider without explicit client
-let AgentContext: React.Context<{ client: Inference } | null> | null = null;
-try {
-  // Dynamic import to avoid circular dependencies
-  AgentContext = require('@/components/agent/context').AgentContext;
-} catch {
-  // AgentContext not available, client prop will be required
-}
-
 export interface TaskOutputWrapperProps {
-  /** The inference client instance (optional if used within AgentProvider) */
-  client?: Inference;
+  /** The inference client instance (AgentClient compatible) */
+  client: AgentClient;
   /** The task ID to display */
   taskId: string;
   /** Additional CSS classes */
@@ -60,7 +48,7 @@ export interface TaskOutputWrapperProps {
 }
 
 export const TaskOutputWrapper = memo(function TaskOutputWrapper({
-  client: clientProp,
+  client,
   taskId,
   className,
   compact = false,
@@ -70,18 +58,6 @@ export const TaskOutputWrapper = memo(function TaskOutputWrapper({
   onError,
   onCancel,
 }: TaskOutputWrapperProps) {
-  // Try to get client from context if not provided
-  const contextValue = AgentContext ? useContext(AgentContext) : null;
-  const client = clientProp ?? contextValue?.client;
-
-  // If no client available, show error
-  if (!client) {
-    return (
-      <div className={cn('p-4 text-sm text-red-500', className)}>
-        Error: No client provided. Pass a client prop or use within AgentProvider.
-      </div>
-    );
-  }
 
   const { task, isLoading, isStreaming } = useTask({
     client,
@@ -95,9 +71,9 @@ export const TaskOutputWrapper = memo(function TaskOutputWrapper({
     if (onCancel) {
       onCancel(taskId);
     } else {
-      // Default cancel behavior using client
+      // Default cancel behavior using client.http
       try {
-        await client.tasks.cancel(taskId);
+        await client.http.request('post', `/tasks/${taskId}/cancel`);
       } catch (err) {
         onError?.(err instanceof Error ? err : new Error('Failed to cancel task'));
       }

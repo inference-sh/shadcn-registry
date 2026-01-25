@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { PageLayout } from '@/components/page-layout'
 import { WidgetRenderer } from '@/registry/blocks/widgets/widget-renderer'
-import type { Widget, WidgetAction, WidgetFormData } from '@/registry/blocks/agent/types'
+import type { Widget, WidgetAction, WidgetFormData } from '@/registry/blocks/widgets/types'
 import type { TocItem } from '@/registry/blocks/table-of-contents/table-of-contents'
 import { cn } from '@/lib/utils'
 import { ChevronDown, ChevronRight, Code } from 'lucide-react'
@@ -23,7 +23,7 @@ const tocItems: TocItem[] = [
 ]
 
 const usageCode = `import { WidgetRenderer } from '@/components/widgets/widget-renderer'
-import type { Widget, WidgetAction } from '@/registry/blocks/agent/types'
+import type { Widget, WidgetAction } from '@/registry/blocks/widgets/types'
 
 export function MyWidget() {
   const widget: Widget = {

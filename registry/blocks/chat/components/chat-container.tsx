@@ -5,9 +5,13 @@
  * Provides structure: [header] [messages] [input]
  */
 
-import React, { forwardRef } from 'react';
+import React, { forwardRef, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import type { ChatContainerProps } from '@/components/agent/types';
+
+interface ChatContainerProps {
+  children: ReactNode;
+  className?: string;
+}
 
 /**
  * ChatContainer - Grid layout wrapper for chat components

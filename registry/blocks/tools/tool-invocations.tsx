@@ -7,7 +7,12 @@
 import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { ToolInvocation } from '@/components/agent/tool-invocation';
-import type { ToolInvocationsProps } from '@/components/agent/types';
+import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
+
+interface ToolInvocationsProps {
+  message: ChatMessageDTO;
+  className?: string;
+}
 
 /**
  * ToolInvocations - List of tool calls for a message

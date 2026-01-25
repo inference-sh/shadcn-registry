@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Widget, WidgetAction, WidgetFormData, WidgetNode } from "@/components/agent/types"
+import type { Widget, WidgetAction, WidgetFormData, WidgetNode } from "@/components/agent/widget-types"
 import { cn } from "@/lib/utils"
 import React, { createContext, useContext, useState } from "react"
 

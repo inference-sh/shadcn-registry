@@ -1,8 +1,8 @@
 /**
  * ChatInput Primitive
- * 
+ *
  * Auto-resizing textarea with file upload support.
- * Supports @file references with autocomplete.
+ * Files are tracked locally; SDK's sendMessage handles actual uploads.
  */
 
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
@@ -22,14 +22,22 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useAgent, useAgentActions } from '@/hooks/use-agent';
+import { useAgentChat, useAgentActions } from '@inferencesh/sdk/agent';
 import {
   useFileUploadManager,
   FileUploadList,
   showFileUploadDialog,
   type FileUpload,
 } from '@/components/agent/file-upload';
-import type { ChatInputProps } from '@/components/agent/types';
+
+interface ChatInputProps {
+  placeholder?: string;
+  className?: string;
+  allowAttachments?: boolean;
+  allowFiles?: boolean;
+  allowImages?: boolean;
+  onFilesChange?: (files: File[]) => void;
+}
 
 // =============================================================================
 // Drag Overlay Component (CSS transitions)
@@ -60,7 +68,7 @@ const DragOverlay = memo(function DragOverlay({ isDragging }: DragOverlayProps) 
 
 /**
  * ChatInput - Self-contained input with file upload and auto-resize
- * 
+ *
  * @example
  * ```tsx
  * <ChatInput placeholder="Ask me anything..." allowAttachments />
@@ -77,7 +85,7 @@ export const ChatInput = memo(function ChatInput({
   const showFileButton = allowAttachments !== false && allowFiles;
   const showImageButton = allowAttachments !== false && allowImages;
   const enableAttachments = showFileButton || showImageButton;
-  const { isGenerating, error } = useAgent();
+  const { isGenerating, error } = useAgentChat();
   const { sendMessage, stopGeneration, clearError } = useAgentActions();
 
   const [value, setValue] = useState('');
@@ -87,19 +95,16 @@ export const ChatInput = memo(function ChatInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const dragCounterRef = useRef(0);
 
-  // File upload manager
+  // File upload manager - pure local state, SDK handles actual upload
   const {
     uploads,
     addFiles,
     removeUpload,
-    cancelUpload,
-    getCompletedFiles,
+    clearAll,
+    getFiles,
   } = useFileUploadManager();
 
-  // Check if we have any pending/uploading files
-  const hasPendingUploads = uploads.some(u => u.status === 'uploading' || u.status === 'pending');
-  const hasCompletedUploads = uploads.some(u => u.status === 'completed');
-  const completedUploads = uploads.filter(u => u.status === 'completed');
+  const hasFiles = uploads.length > 0;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -134,57 +139,28 @@ export const ChatInput = memo(function ChatInput({
 
   // Handle send
   const handleSend = useCallback(async () => {
-    let messageText = value.trim();
+    const messageText = value.trim();
 
-    // Don't send if uploading
-    if (hasPendingUploads) return;
-
-    // Need either text or completed files
-    if (!messageText && !hasCompletedUploads) return;
+    // Need either text or files
+    if (!messageText && !hasFiles) return;
 
     if (isGenerating) return;
 
-    // Get already-uploaded files (FileDTO objects)
-    const completedFiles = getCompletedFiles();
-
-    // Replace @filename references with file URIs
-    completedFiles.forEach(file => {
-      // Get the original filename from the file
-      const fileName = file.filename || file.uri.split('/').pop() || '';
-      const fileRef = `@${fileName}`;
-      if (messageText.includes(fileRef) && file.uri) {
-        messageText = messageText.replaceAll(fileRef, file.uri);
-      }
-    });
-
-    // Also check uploads for filenames (in case filename differs from URI)
-    uploads.forEach(u => {
-      if (u.status === 'completed' && u.uploadedFile?.uri) {
-        const fileRef = `@${u.file.name}`;
-        if (messageText.includes(fileRef)) {
-          messageText = messageText.replaceAll(fileRef, u.uploadedFile.uri);
-        }
-      }
-    });
+    // Get files for upload
+    const files = getFiles();
 
     setValue('');
+    clearAll();
 
-    // Clear uploads after sending
-    uploads.forEach(u => {
-      if (u.status === 'completed' || u.status === 'failed' || u.status === 'cancelled') {
-        removeUpload(u.id);
-      }
-    });
-
-    // Pass FileDTO objects - SDK now detects they have uri and skips re-upload
-    await sendMessage(messageText, completedFiles.length > 0 ? completedFiles : undefined);
-  }, [value, hasPendingUploads, hasCompletedUploads, isGenerating, getCompletedFiles, uploads, removeUpload, sendMessage]);
+    // Send message with files - SDK handles upload
+    await sendMessage(messageText, files.length > 0 ? files : undefined);
+  }, [value, hasFiles, isGenerating, getFiles, clearAll, sendMessage]);
 
   // Handle key down
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Show command menu when @ is typed (and we have uploaded files)
-      if (e.key === '@' && completedUploads.length > 0) {
+      // Show command menu when @ is typed (and we have files)
+      if (e.key === '@' && uploads.length > 0) {
         e.preventDefault();
         setShowCommandMenu(true);
       }
@@ -200,7 +176,7 @@ export const ChatInput = memo(function ChatInput({
         handleSend();
       }
     },
-    [handleSend, completedUploads.length]
+    [handleSend, uploads.length]
   );
 
   // Handle paste
@@ -221,7 +197,7 @@ export const ChatInput = memo(function ChatInput({
     if (files.length > 0) {
       addFiles(files);
     }
-  }, [allowAttachments, addFiles]);
+  }, [enableAttachments, addFiles]);
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
@@ -277,7 +253,7 @@ export const ChatInput = memo(function ChatInput({
     }
   };
 
-  const canSend = (value.trim().length > 0 || hasCompletedUploads) && !isGenerating && !hasPendingUploads;
+  const canSend = (value.trim().length > 0 || hasFiles) && !isGenerating;
 
   return (
     <div className="relative">
@@ -314,7 +290,6 @@ export const ChatInput = memo(function ChatInput({
         <FileUploadList
           uploads={uploads}
           onRemove={removeUpload}
-          onCancel={cancelUpload}
           className="pb-2"
         />
       )}
@@ -331,9 +306,9 @@ export const ChatInput = memo(function ChatInput({
               <CommandInput placeholder="search files..." />
               <CommandList>
                 <CommandEmpty>no files uploaded.</CommandEmpty>
-                {completedUploads.length > 0 && (
+                {uploads.length > 0 && (
                   <CommandGroup heading="Files">
-                    {completedUploads.map((upload) => (
+                    {uploads.map((upload) => (
                       <CommandItem
                         key={upload.id}
                         onSelect={() => {
@@ -360,7 +335,6 @@ export const ChatInput = memo(function ChatInput({
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={placeholder}
-          // disabled={isGenerating}
           rows={1}
           className={cn(
             'w-full resize-none bg-transparent text-sm',

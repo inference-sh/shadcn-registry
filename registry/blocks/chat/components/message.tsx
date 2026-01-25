@@ -11,13 +11,21 @@ import {
   ChatMessageRoleAssistant,
   ChatMessageContentTypeReasoning,
   ChatMessageContentTypeText,
+  ChatMessageStatusReady,
+  ChatMessageStatusFailed,
+  ChatMessageStatusCancelled,
 } from '@inferencesh/sdk';
-import { isTerminalChatMessageStatus } from '@/components/agent/types';
+import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
 import { MessageBubble } from '@/components/agent/message-bubble';
 import { MessageContent } from '@/components/agent/message-content';
 import { MessageReasoning } from '@/components/agent/message-reasoning';
 import { ToolInvocations } from '@/components/agent/tool-invocations';
-import type { ChatMessageDTO } from '@/components/agent/types';
+
+function isTerminalChatMessageStatus(status: string | undefined): boolean {
+  return status === ChatMessageStatusReady ||
+    status === ChatMessageStatusFailed ||
+    status === ChatMessageStatusCancelled;
+}
 
 export interface MessageProps {
   message: ChatMessageDTO;

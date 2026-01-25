@@ -15,7 +15,13 @@ import {
   ChatMessageContentTypeImage,
   ChatMessageContentTypeFile,
 } from '@inferencesh/sdk';
-import type { MessageContentProps, ChatMessageDTO } from '@/components/agent/types';
+import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
+
+interface MessageContentProps {
+  message: ChatMessageDTO;
+  className?: string;
+  truncate?: boolean;
+}
 
 // =============================================================================
 // Helper functions

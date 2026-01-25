@@ -13,7 +13,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ChevronRight, MessageCircleDashed } from 'lucide-react';
-import type { MessageReasoningProps } from '@/components/agent/types';
+
+interface MessageReasoningProps {
+  reasoning: string;
+  isReasoning?: boolean;
+  className?: string;
+}
 
 /**
  * MessageReasoning - Collapsible reasoning block

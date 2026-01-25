@@ -6,7 +6,8 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Inference, TaskDTO as Task } from '@inferencesh/sdk';
+import type { TaskDTO as Task } from '@inferencesh/sdk';
+import type { AgentClient } from '@inferencesh/sdk/agent';
 import {
   StreamManager,
   TaskStatusCompleted,
@@ -15,8 +16,8 @@ import {
 } from '@inferencesh/sdk';
 
 export interface UseTaskOptions {
-  /** The inference client instance */
-  client: Inference;
+  /** The inference client instance (AgentClient compatible) */
+  client: AgentClient;
   /** The task ID to fetch and stream */
   taskId: string;
   /** Called when task data updates */
@@ -56,19 +57,6 @@ export function isTerminalStatus(status: number | undefined): boolean {
 }
 
 /**
- * Internal SDK methods interface
- * These methods exist on the Inference class but aren't in the public type definitions yet.
- * Will be removed when SDK is updated with public getTask/streamTask methods.
- */
-interface InferenceInternal {
-  _request<T>(method: 'get' | 'post' | 'put' | 'delete', endpoint: string): Promise<T>;
-  _createEventSource(endpoint: string): EventSource;
-  // Public methods that may exist in newer SDK versions
-  getTask?(taskId: string): Promise<Task>;
-  streamTask?(taskId: string): EventSource;
-}
-
-/**
  * Hook for fetching and streaming task updates
  *
  * @example
@@ -97,9 +85,6 @@ export function useTask({
   const streamManagerRef = useRef<StreamManager<Task> | null>(null);
   const taskRef = useRef<Task | null>(null);
 
-  // Cast client to access internal methods
-  const internalClient = client as unknown as InferenceInternal;
-
   // Keep task ref in sync
   useEffect(() => {
     taskRef.current = task;
@@ -121,11 +106,7 @@ export function useTask({
 
     const manager = new StreamManager<Task>({
       createEventSource: async () => {
-        // Use public method if available, otherwise fall back to internal
-        if (internalClient.streamTask) {
-          return internalClient.streamTask(taskId);
-        }
-        return internalClient._createEventSource(`/tasks/${taskId}/stream`);
+        return client.http.createEventSource(`/tasks/${taskId}/stream`);
       },
       autoReconnect,
       maxReconnects,
@@ -171,7 +152,7 @@ export function useTask({
 
     streamManagerRef.current = manager;
     manager.connect();
-  }, [taskId, client, internalClient, autoReconnect, maxReconnects, onUpdate, onComplete, onError, stopStream]);
+  }, [taskId, client, autoReconnect, maxReconnects, onUpdate, onComplete, onError, stopStream]);
 
   const fetchTask = useCallback(async () => {
     if (!taskId || !client) return;
@@ -180,13 +161,7 @@ export function useTask({
     setError(null);
 
     try {
-      // Use public method if available, otherwise fall back to internal
-      let taskData: Task;
-      if (internalClient.getTask) {
-        taskData = await internalClient.getTask(taskId);
-      } else {
-        taskData = await internalClient._request<Task>('get', `/tasks/${taskId}`);
-      }
+      const taskData = await client.http.request<Task>('get', `/tasks/${taskId}`);
 
       setTask(taskData);
       onUpdate?.(taskData);
@@ -204,7 +179,7 @@ export function useTask({
     } finally {
       setIsLoading(false);
     }
-  }, [taskId, client, internalClient, onUpdate, onComplete, onError, startStream]);
+  }, [taskId, client, onUpdate, onComplete, onError, startStream]);
 
   // Fetch task on mount and when taskId changes
   useEffect(() => {

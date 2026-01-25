@@ -1,144 +1,64 @@
 /**
  * File Upload Primitives
- * 
- * Components for file upload with progress tracking.
- * Uses SDK client for file uploads.
+ *
+ * Pure UI components for file selection and preview.
+ * Actual uploads are handled by SDK's sendMessage(text, files).
  */
 
-import React, { memo, useCallback, useState, useEffect, useContext } from 'react';
+import React, { memo, useCallback, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { X, FileIcon, Check, AlertCircle } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
-import { AgentContext } from '@/components/agent/context';
-import type { File as FileDTO } from '@inferencesh/sdk';
+import { X, FileIcon } from 'lucide-react';
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export type UploadStatus = 'pending' | 'uploading' | 'completed' | 'failed' | 'cancelled';
-
 export interface FileUpload {
   id: string;
   file: File;
-  status: UploadStatus;
-  progress: number;
-  uploadedFile?: FileDTO;
-  error?: string;
-  abortController?: AbortController;
 }
 
 export interface FileUploadManagerState {
   uploads: FileUpload[];
   addFiles: (files: File[]) => void;
   removeUpload: (id: string) => void;
-  cancelUpload: (id: string) => void;
-  clearCompleted: () => void;
-  getCompletedFiles: () => FileDTO[];
+  clearAll: () => void;
+  getFiles: () => File[];
 }
 
 // =============================================================================
-// Hook: useFileUploadManager
+// Hook: useFileUploadManager (pure local state, no SDK dependency)
 // =============================================================================
 
 export function useFileUploadManager(): FileUploadManagerState {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
-  const context = useContext(AgentContext);
-
-  const uploadFile = useCallback(async (upload: FileUpload) => {
-    const abortController = new AbortController();
-
-    setUploads(prev => prev.map(u =>
-      u.id === upload.id ? { ...u, status: 'uploading' as const, abortController } : u
-    ));
-
-    try {
-      // Get client from context and upload file
-      if (!context) {
-        throw new Error('No AgentContext available for file uploads');
-      }
-
-      const { client } = context;
-      if (!client?.files?.upload) {
-        throw new Error('Client does not support file uploads');
-      }
-
-      const result = await client.files.upload(upload.file);
-
-      if (abortController.signal.aborted) {
-        return;
-      }
-
-      setUploads(prev => prev.map(u =>
-        u.id === upload.id ? { ...u, status: 'completed' as const, progress: 100, uploadedFile: result } : u
-      ));
-    } catch (error) {
-      if (abortController.signal.aborted) {
-        return;
-      }
-      setUploads(prev => prev.map(u =>
-        u.id === upload.id ? {
-          ...u,
-          status: 'failed' as const,
-          error: error instanceof Error ? error.message : 'Upload failed',
-          progress: 0
-        } : u
-      ));
-    }
-  }, [context]);
 
   const addFiles = useCallback((files: File[]) => {
     const newUploads: FileUpload[] = files.map(file => ({
       id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       file,
-      status: 'pending' as const,
-      progress: 0,
     }));
-
     setUploads(prev => [...prev, ...newUploads]);
-
-    newUploads.forEach(upload => {
-      uploadFile(upload);
-    });
-  }, [uploadFile]);
+  }, []);
 
   const removeUpload = useCallback((id: string) => {
-    setUploads(prev => {
-      const upload = prev.find(u => u.id === id);
-      if (upload?.abortController) {
-        upload.abortController.abort();
-      }
-      return prev.filter(u => u.id !== id);
-    });
+    setUploads(prev => prev.filter(u => u.id !== id));
   }, []);
 
-  const cancelUpload = useCallback((id: string) => {
-    setUploads(prev => prev.map(u => {
-      if (u.id === id && u.status === 'uploading') {
-        u.abortController?.abort();
-        return { ...u, status: 'cancelled' as const, progress: 0 };
-      }
-      return u;
-    }));
+  const clearAll = useCallback(() => {
+    setUploads([]);
   }, []);
 
-  const clearCompleted = useCallback(() => {
-    setUploads(prev => prev.filter(u => u.status !== 'completed' && u.status !== 'failed' && u.status !== 'cancelled'));
-  }, []);
-
-  const getCompletedFiles = useCallback(() => {
-    return uploads
-      .filter(u => u.status === 'completed' && u.uploadedFile)
-      .map(u => u.uploadedFile!);
+  const getFiles = useCallback(() => {
+    return uploads.map(u => u.file);
   }, [uploads]);
 
   return {
     uploads,
     addFiles,
     removeUpload,
-    cancelUpload,
-    clearCompleted,
-    getCompletedFiles,
+    clearAll,
+    getFiles,
   };
 }
 
@@ -184,17 +104,15 @@ function formatFileSize(bytes: number): string {
 interface FileUploadPreviewProps {
   upload: FileUpload;
   onRemove: () => void;
-  onCancel?: () => void;
   className?: string;
 }
 
 export const FileUploadPreview = memo(function FileUploadPreview({
   upload,
   onRemove,
-  onCancel,
   className,
 }: FileUploadPreviewProps) {
-  const { file, status, progress, error, uploadedFile } = upload;
+  const { file } = upload;
   const fileType = getFileType(file);
   const previewUrl = (fileType === 'image' || fileType === 'video')
     ? URL.createObjectURL(file)
@@ -212,42 +130,25 @@ export const FileUploadPreview = memo(function FileUploadPreview({
     }
   }, [file, fileType]);
 
-  const handleRemoveOrCancel = () => {
-    if (status === 'uploading' && onCancel) {
-      onCancel();
-    } else {
-      onRemove();
-    }
-  };
-
-  const handlePreviewClick = () => {
-    if (status === 'completed' && uploadedFile?.uri) {
-      window.open(uploadedFile.uri, '_blank');
-    } else if (previewUrl) {
-      window.open(previewUrl, '_blank');
-    }
-  };
-
-  const isClickable = status === 'completed' || previewUrl;
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
     <div
       className={cn(
         'relative flex items-center gap-2.5 rounded-lg border bg-muted/30 p-1.5 pr-8',
         'max-w-[220px] animate-in fade-in slide-in-from-bottom-2 duration-150',
-        status === 'failed' && 'border-destructive/50 bg-destructive/10',
-        status === 'completed' && 'border-border',
         className
       )}
     >
       {/* Thumbnail */}
-      <div
-        className={cn(
-          'relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted',
-          isClickable && 'cursor-pointer hover:opacity-80 transition-opacity'
-        )}
-        onClick={isClickable ? handlePreviewClick : undefined}
-      >
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
         {fileType === 'image' && previewUrl && (
           <img src={previewUrl} alt={file.name} className="h-full w-full object-cover" />
         )}
@@ -283,68 +184,23 @@ export const FileUploadPreview = memo(function FileUploadPreview({
             </span>
           </div>
         )}
-
-        {status === 'uploading' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-            <Spinner className="size-4 text-primary" />
-          </div>
-        )}
-
-        {status === 'completed' && (
-          <div className="absolute -bottom-1 -right-1 rounded-full bg-emerald-500 p-0.5 shadow-sm">
-            <Check className="h-2 w-2 text-white" />
-          </div>
-        )}
-        {status === 'failed' && (
-          <div className="absolute -bottom-1 -right-1 rounded-full bg-destructive p-0.5 shadow-sm">
-            <AlertCircle className="h-2 w-2 text-white" />
-          </div>
-        )}
       </div>
 
       {/* File info */}
       <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            'truncate text-xs font-medium',
-            isClickable && 'cursor-pointer hover:underline'
-          )}
-          onClick={isClickable ? handlePreviewClick : undefined}
-        >
-          {file.name}
-        </p>
-        <p className="text-[10px] text-muted-foreground">
-          {status === 'uploading' && 'uploading...'}
-          {status === 'completed' && formatFileSize(file.size)}
-          {status === 'failed' && (error || 'upload failed')}
-          {status === 'cancelled' && 'cancelled'}
-          {status === 'pending' && 'waiting...'}
-        </p>
+        <p className="truncate text-xs font-medium">{file.name}</p>
+        <p className="text-[10px] text-muted-foreground">{formatFileSize(file.size)}</p>
       </div>
 
-      {/* Remove/Cancel button */}
+      {/* Remove button */}
       <button
         type="button"
-        onClick={handleRemoveOrCancel}
-        className={cn(
-          'absolute right-1 top-1 rounded-full p-1 transition-colors cursor-pointer',
-          'hover:bg-muted-foreground/20',
-          status === 'uploading' && 'hover:bg-destructive/20 hover:text-destructive'
-        )}
-        aria-label={status === 'uploading' ? 'Cancel upload' : 'Remove file'}
+        onClick={onRemove}
+        className="absolute right-1 top-1 rounded-full p-1 transition-colors cursor-pointer hover:bg-muted-foreground/20"
+        aria-label="Remove file"
       >
         <X className="h-3 w-3" />
       </button>
-
-      {/* Progress bar */}
-      {status === 'uploading' && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden rounded-b-lg bg-muted">
-          <div
-            className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
     </div>
   );
 });
@@ -356,14 +212,12 @@ export const FileUploadPreview = memo(function FileUploadPreview({
 interface FileUploadListProps {
   uploads: FileUpload[];
   onRemove: (id: string) => void;
-  onCancel: (id: string) => void;
   className?: string;
 }
 
 export const FileUploadList = memo(function FileUploadList({
   uploads,
   onRemove,
-  onCancel,
   className,
 }: FileUploadListProps) {
   if (uploads.length === 0) return null;
@@ -375,7 +229,6 @@ export const FileUploadList = memo(function FileUploadList({
           key={upload.id}
           upload={upload}
           onRemove={() => onRemove(upload.id)}
-          onCancel={() => onCancel(upload.id)}
         />
       ))}
     </div>

@@ -1,7 +1,8 @@
 /**
  * Agent - Pre-composed Chat Component
- * 
+ *
  * Ready-to-use chat UI built from primitives.
+ * Uses @inferencesh/sdk/agent for state management.
  */
 
 import React, { memo, useMemo } from 'react';
@@ -18,8 +19,14 @@ import {
   ChatMessageContentTypeReasoning,
   ChatMessageContentTypeText,
 } from '@inferencesh/sdk';
-import { AgentProvider } from '@/components/agent/provider';
-import { useAgent, useAgentActions } from '@/hooks/use-agent';
+import {
+  AgentChatProvider,
+  useAgentChat,
+  useAgentActions,
+  isAdHocConfig,
+  type ChatMessageDTO,
+  type AgentOptions,
+} from '@inferencesh/sdk/agent';
 import { ChatContainer } from '@/components/agent/chat-container';
 import { ChatMessages } from '@/components/agent/chat-messages';
 import { ChatInput } from '@/components/agent/chat-input';
@@ -28,8 +35,22 @@ import { MessageContent } from '@/components/agent/message-content';
 import { MessageReasoning } from '@/components/agent/message-reasoning';
 import { MessageStatusIndicator } from '@/components/agent/message-status-indicator';
 import { ToolInvocations } from '@/components/agent/tool-invocations';
-import type { AgentProps, ChatMessageDTO } from '@/components/agent/types';
-import { isAdHocConfig } from '@/components/agent/types';
+
+// Component props
+interface AgentProps {
+  proxyUrl?: string;
+  apiKey?: string;
+  config: AgentOptions;
+  name?: string;
+  chatId?: string;
+  className?: string;
+  compact?: boolean;
+  allowFiles?: boolean;
+  allowImages?: boolean;
+  onChatCreated?: (chatId: string) => void;
+  description?: string;
+  examplePrompts?: string[];
+}
 
 // Check if message status is terminal (generation complete)
 function isTerminalStatus(status: string | undefined): boolean {
@@ -197,7 +218,7 @@ const AgentContent = memo(function AgentContent({
   description?: string;
   examplePrompts?: string[];
 }) {
-  const { messages, isGenerating } = useAgent();
+  const { messages, isGenerating } = useAgentChat();
   const hasMessages = messages.length > 0;
 
   return (
@@ -251,10 +272,9 @@ export function Agent({
   const effectiveExamplePrompts = examplePrompts ?? (isAdHocConfig(config) ? config.example_prompts : undefined);
 
   return (
-    <AgentProvider
+    <AgentChatProvider
       client={client}
-      config={config}
-      name={name}
+      agentConfig={config}
       chatId={chatId}
       onChatCreated={onChatCreated}
     >
@@ -266,7 +286,7 @@ export function Agent({
         description={effectiveDescription}
         examplePrompts={effectiveExamplePrompts}
       />
-    </AgentProvider>
+    </AgentChatProvider>
   );
 }
 
