@@ -265,6 +265,7 @@ You are helping users configure a SaaS pricing plan. The form contains:
           <div className="border rounded-lg overflow-hidden h-[500px]">
             <Agent
               {...(useProxy ? { proxyUrl: '/api/inference/proxy' } : { apiKey })}
+              baseUrl="https://api-dev.inference.sh"
               name="pricing-assistant"
               allowFiles={false}
               allowImages={false}
@@ -296,6 +297,7 @@ function ImageAgentDemo() {
     <div className="border rounded-lg overflow-hidden h-[500px]">
       <Agent
         proxyUrl="/api/inference/proxy"
+        baseUrl="https://api-dev.inference.sh"
         name="image-agent"
         config={{ agent: 'okaris/shadcn-image@045tep9w' }}
         description="I can generate images from your descriptions"

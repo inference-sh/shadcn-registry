@@ -40,6 +40,7 @@ import { ToolInvocations } from '@/components/agent/tool-invocations';
 interface AgentProps {
   proxyUrl?: string;
   apiKey?: string;
+  baseUrl?: string;
   config: AgentOptions;
   name?: string;
   chatId?: string;
@@ -243,6 +244,7 @@ const AgentContent = memo(function AgentContent({
 export function Agent({
   proxyUrl,
   apiKey,
+  baseUrl,
   config,
   name,
   chatId,
@@ -260,8 +262,8 @@ export function Agent({
       console.error('[Agent] Either proxyUrl or apiKey is required');
       return null;
     }
-    return new Inference({ proxyUrl, apiKey });
-  }, [proxyUrl, apiKey]);
+    return new Inference({ proxyUrl, apiKey, baseUrl });
+  }, [proxyUrl, apiKey, baseUrl]);
 
   if (!client) {
     return null;
