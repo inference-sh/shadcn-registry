@@ -22,7 +22,7 @@ const tocItems: TocItem[] = [
   { id: 'features', title: 'features' },
 ]
 
-const usageCode = `import { TaskOutputWrapper } from '@/components/task-output'
+const usageCode = `import { TaskOutputWrapper } from '@/components/infsh/task/task-output-wrapper'
 import { Inference } from '@inferencesh/sdk'
 
 // Create a client
@@ -38,7 +38,7 @@ const client = new Inference({ proxyUrl: '/api/inference/proxy' })
 />`
 
 const hookUsageCode = `import { useTask } from '@/hooks/use-task'
-import { TaskOutput } from '@/components/task-output'
+import { TaskOutput } from '@/components/infsh/task/task-output'
 
 function MyComponent({ taskId }: { taskId: string }) {
   const { task, isLoading, isStreaming } = useTask({

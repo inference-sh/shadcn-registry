@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "youtube-embed",
-  "type": "registry:block",
   "title": "YouTube Embed",
   "description": "Responsive YouTube video embed with loading state.",
   "files": [
@@ -10,5 +9,6 @@
       "content": "'use client'\n\nimport { cn } from '@/lib/utils'\nimport { useState } from 'react'\n\ninterface YouTubeEmbedProps {\n  videoId: string\n  title?: string\n  className?: string\n}\n\nexport function YouTubeEmbed({ videoId, title, className }: YouTubeEmbedProps) {\n  const [isLoading, setIsLoading] = useState(true)\n\n  return (\n    <div className={cn(\n      'flex flex-col space-y-4 w-full h-full relative rounded-xl overflow-hidden border border-border',\n      className\n    )}>\n      {isLoading && (\n        <div className=\"absolute inset-0 flex items-center justify-center bg-muted\">\n          <div className=\"w-8 h-8 border-2 border-pink-400 border-t-transparent rounded-full animate-spin\" />\n        </div>\n      )}\n      <iframe\n        src={`https://www.youtube.com/embed/${videoId}`}\n        title={title || 'YouTube video player'}\n        frameBorder=\"0\"\n        allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\"\n        referrerPolicy=\"strict-origin-when-cross-origin\"\n        allowFullScreen\n        loading=\"lazy\"\n        onLoad={() => setIsLoading(false)}\n        className={cn(\n          'w-full aspect-video h-full bg-transparent transition-opacity duration-300',\n          isLoading ? 'opacity-0' : 'opacity-100'\n        )}\n      />\n    </div>\n  )\n}\n\n",
       "type": "registry:component"
     }
-  ]
+  ],
+  "type": "registry:block"
 }

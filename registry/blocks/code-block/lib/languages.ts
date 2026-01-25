@@ -1,4 +1,4 @@
-import type { LanguageDefinition } from '@/components/code-block/types'
+import type { LanguageDefinition } from '@/components/infsh/code-block/types'
 
 /**
  * JavaScript/TypeScript/JSX/TSX language definition

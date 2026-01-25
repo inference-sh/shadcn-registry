@@ -732,13 +732,14 @@ export const { GET, POST, PUT } = route;`}
             the simplest way to use the Agent component:
           </p>
           <CodeBlock language="tsx">
-            {`import { Agent } from '@/components/agent'
+            {`import { Agent } from '@/components/infsh/agent/agent'
 
 export function ChatAssistant() {
   return (
     <Agent
       proxyUrl="/api/inference/proxy"
-      agentConfig={{
+      name="my-assistant"
+      config={{
         core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
         description: 'A helpful AI assistant',
         system_prompt: 'You are helpful and concise.',
@@ -747,23 +748,21 @@ export function ChatAssistant() {
           'Tell me a joke',
         ],
       }}
-      agentName="my-assistant"
     />
   )
 }`}
           </CodeBlock>
           <p className="text-sm text-muted-foreground mt-6 mb-4">
-            for more control, use the AgentProvider with custom chat components and client-side tools:
+            for more control, use the AgentChatProvider with custom chat components and client-side tools:
           </p>
           <CodeBlock language="tsx">
             {`import { useRef, useMemo } from 'react'
-import { AgentProvider } from '@/registry/blocks/agent/provider'
-import { useAgent, useAgentActions } from '@/registry/blocks/agent/hooks/use-agent'
-import { ChatContainer } from '@/components/chat/components/chat-container'
-import { ChatMessages } from '@/components/chat/components/chat-messages'
-import { ChatInput } from '@/components/chat/components/chat-input'
-import { MessageBubble } from '@/components/chat/components/message-bubble'
 import { Inference } from '@inferencesh/sdk'
+import { AgentChatProvider, useAgentChat, useAgentActions } from '@inferencesh/sdk/agent'
+import { ChatContainer } from '@/components/infsh/agent/chat-container'
+import { ChatMessages } from '@/components/infsh/agent/chat-messages'
+import { ChatInput } from '@/components/infsh/agent/chat-input'
+import { MessageBubble } from '@/components/infsh/agent/message-bubble'
 import { createScopedTools, FORM_ASSISTANT_PROMPT } from './lib/client-tools'
 
 function MyAssistant() {
@@ -780,14 +779,14 @@ function MyAssistant() {
   return (
     <div className="grid lg:grid-cols-2 gap-4">
       <form ref={formRef}>{/* Your form fields here */}</form>
-      <AgentProvider client={client} agentConfig={agentConfig} agentName="form-assistant">
+      <AgentChatProvider client={client} agentConfig={agentConfig}>
         <ChatContainer>
           <ChatMessages>
             {({ messages }) => messages.map(m => <MessageBubble key={m.id} message={m} />)}
           </ChatMessages>
           <ChatInput />
         </ChatContainer>
-      </AgentProvider>
+      </AgentChatProvider>
     </div>
   )
 }`}

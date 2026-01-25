@@ -6,7 +6,7 @@
 
 import React, { memo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { MarkdownRenderer } from '@/components/infsh/markdown-renderer';
 import { Button } from '@/components/ui/button';
 import { FileIcon, ExternalLink } from 'lucide-react';
 import {
@@ -21,6 +21,8 @@ interface MessageContentProps {
   message: ChatMessageDTO;
   className?: string;
   truncate?: boolean;
+  /** Custom markdown renderer - defaults to built-in MarkdownRenderer */
+  renderMarkdown?: (content: string) => React.ReactNode;
 }
 
 // =============================================================================
@@ -180,6 +182,7 @@ export const MessageContent = memo(function MessageContent({
   message,
   className,
   truncate = false,
+  renderMarkdown,
 }: MessageContentProps) {
   const isUser = message.role === ChatMessageRoleUser;
   const textContent = getTextContent(message);
@@ -236,7 +239,7 @@ export const MessageContent = memo(function MessageContent({
               )}
             </div>
           ) : (
-            <MarkdownRenderer content={textContent} />
+            renderMarkdown ? renderMarkdown(textContent) : <MarkdownRenderer content={textContent} />
           )}
         </div>
       )}

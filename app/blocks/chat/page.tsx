@@ -20,25 +20,37 @@ const tocItems: TocItem[] = [
 
 const installCode = `npx shadcn@latest add https://ui.inference.sh/r/chat`
 
-const usageCode = `import { ChatContainer } from '@/components/chat/chat-container'
-import { ChatInput } from '@/components/chat/chat-input'
-import { ChatMessages } from '@/components/chat/chat-messages'
-import { MessageBubble } from '@/components/chat/message-bubble'
-import { MessageContent } from '@/components/chat/message-content'
+const usageCode = `import { Inference } from '@inferencesh/sdk'
+import { AgentChatProvider } from '@inferencesh/sdk/agent'
+import { ChatContainer } from '@/components/infsh/agent/chat-container'
+import { ChatInput } from '@/components/infsh/agent/chat-input'
+import { ChatMessages } from '@/components/infsh/agent/chat-messages'
+import { MessageBubble } from '@/components/infsh/agent/message-bubble'
+import { MessageContent } from '@/components/infsh/agent/message-content'
+import { useMemo } from 'react'
 
 export function Chat() {
+  const client = useMemo(() => new Inference({ proxyUrl: '/api/inference/proxy' }), [])
+
   return (
-    <ChatContainer>
-      <ChatMessages>
-        <MessageBubble message={userMessage}>
-          <MessageContent message={userMessage} />
-        </MessageBubble>
-        <MessageBubble message={assistantMessage}>
-          <MessageContent message={assistantMessage} />
-        </MessageBubble>
-      </ChatMessages>
-      <ChatInput />
-    </ChatContainer>
+    <AgentChatProvider
+      client={client}
+      agentConfig={{
+        core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+        description: 'A helpful assistant',
+      }}
+    >
+      <ChatContainer>
+        <ChatMessages>
+          {({ messages }) => messages.map(m => (
+            <MessageBubble key={m.id} message={m}>
+              <MessageContent message={m} />
+            </MessageBubble>
+          ))}
+        </ChatMessages>
+        <ChatInput />
+      </ChatContainer>
+    </AgentChatProvider>
   )
 }`
 
@@ -210,11 +222,8 @@ export default function ChatUIPage() {
           <h2 className="text-2xl font-semibold">usage</h2>
           <p className="text-muted-foreground">
             chat provides low-level primitives for building chat interfaces.
-            these components work with the{' '}
-            <a href="/blocks/agent" className="underline">
-              agent
-            </a>{' '}
-            block which provides the context and state management.
+            wrap your components with <code>AgentChatProvider</code> from{' '}
+            <code>@inferencesh/sdk/agent</code> to provide state management.
           </p>
           <CodeBlock language="tsx">{usageCode}</CodeBlock>
         </section>

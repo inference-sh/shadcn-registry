@@ -4,14 +4,14 @@ import { cn } from '@/lib/utils'
 import { Check, Copy } from 'lucide-react'
 import React, { memo, useMemo, useState } from 'react'
 
-import { tokenize, type TokenizeContext } from '@/components/code-block/tokenizer'
-import { tokenStyles } from '@/components/code-block/styles'
-import { normalizeLanguage } from '@/components/code-block/languages'
-import { getTextContent, splitLines, copyToClipboard } from '@/components/code-block/utils'
+import { tokenize, type TokenizeContext } from '@/components/infsh/code-block/tokenizer'
+import { tokenStyles } from '@/components/infsh/code-block/styles'
+import { normalizeLanguage } from '@/components/infsh/code-block/languages'
+import { getTextContent, splitLines, copyToClipboard } from '@/components/infsh/code-block/utils'
 
 // Re-export types for consumers
-export type { Token, TokenType, LanguageDefinition } from '@/components/code-block/types'
-export { getLanguage, normalizeLanguage } from '@/components/code-block/languages'
+export type { Token, TokenType, LanguageDefinition } from '@/components/infsh/code-block/types'
+export { getLanguage, normalizeLanguage } from '@/components/infsh/code-block/languages'
 
 /**
  * Tokenize all lines with context passing between lines

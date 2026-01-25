@@ -1,5 +1,5 @@
-import type { Token, TokenType, LanguageDefinition } from '@/components/code-block/types'
-import { getLanguage } from '@/components/code-block/languages'
+import type { Token, TokenType, LanguageDefinition } from '@/components/infsh/code-block/types'
+import { getLanguage } from '@/components/infsh/code-block/languages'
 
 export interface TokenizeContext {
   /** Whether we're inside a multiline template literal */

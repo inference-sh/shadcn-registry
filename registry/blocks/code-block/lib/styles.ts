@@ -1,4 +1,4 @@
-import type { TokenType } from '@/components/code-block/types'
+import type { TokenType } from '@/components/infsh/code-block/types'
 
 /**
  * Tailwind classes for each token type

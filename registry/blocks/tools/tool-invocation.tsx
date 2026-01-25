@@ -26,9 +26,9 @@ import {
   ToolTypeApp,
 } from '@inferencesh/sdk';
 import { useAgentActions, useAgentClient, type ToolInvocationDTO, type UploadedFile } from '@inferencesh/sdk/agent';
-import { WidgetRenderer } from '@/components/agent/widget-renderer';
-import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/agent/widget-types';
-import { TaskOutputWrapper } from '@/components/task/task-output-wrapper';
+import { WidgetRenderer } from '@/components/infsh/agent/widget-renderer';
+import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/infsh/agent/widget-types';
+import { TaskOutputWrapper } from '@/components/infsh/task/task-output-wrapper';
 
 // Tool finish constants
 const ToolFinishStatusSucceeded = 'succeeded';

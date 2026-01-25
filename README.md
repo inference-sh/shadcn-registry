@@ -16,7 +16,6 @@ npx shadcn@latest add https://ui.inference.sh/r/agent.json
 |-----------|-------------|
 | **agent** | Full-featured agent chat with all primitives wired together |
 | **chat** | Visual building blocks: chat container, messages, input, status indicators |
-| **chat-core** | Headless state management, hooks, and SDK orchestration |
 | **tools** | Tool invocation UI: pending, in-progress, approval, and results |
 | **widgets** | Renders declarative UI nodes from agent tool outputs |
 | **markdown** | High-fidelity markdown with code blocks, embeds, and zoomable images |

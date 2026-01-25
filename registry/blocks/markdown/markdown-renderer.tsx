@@ -1,13 +1,13 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import ZoomableImage from '@/components/zoomable-image'
+import ZoomableImage from '@/components/infsh/zoomable-image'
 import React, { memo, useMemo } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { isCloudInferenceUrl, getYouTubeVideoId, stripHtmlComments } from '@/lib/markdown-helpers'
-import { YouTubeEmbed } from '@/components/youtube-embed'
-import { CompactCodeBlock } from '@/components/code-block/code-block'
+import { YouTubeEmbed } from '@/components/infsh/youtube-embed'
+import { CompactCodeBlock } from '@/components/infsh/code-block/code-block'
 
 export interface MarkdownRendererProps {
   content: string

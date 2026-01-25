@@ -27,14 +27,14 @@ import {
   type ChatMessageDTO,
   type AgentOptions,
 } from '@inferencesh/sdk/agent';
-import { ChatContainer } from '@/components/agent/chat-container';
-import { ChatMessages } from '@/components/agent/chat-messages';
-import { ChatInput } from '@/components/agent/chat-input';
-import { MessageBubble } from '@/components/agent/message-bubble';
-import { MessageContent } from '@/components/agent/message-content';
-import { MessageReasoning } from '@/components/agent/message-reasoning';
-import { MessageStatusIndicator } from '@/components/agent/message-status-indicator';
-import { ToolInvocations } from '@/components/agent/tool-invocations';
+import { ChatContainer } from '@/components/infsh/agent/chat-container';
+import { ChatMessages } from '@/components/infsh/agent/chat-messages';
+import { ChatInput } from '@/components/infsh/agent/chat-input';
+import { MessageBubble } from '@/components/infsh/agent/message-bubble';
+import { MessageContent } from '@/components/infsh/agent/message-content';
+import { MessageReasoning } from '@/components/infsh/agent/message-reasoning';
+import { MessageStatusIndicator } from '@/components/infsh/agent/message-status-indicator';
+import { ToolInvocations } from '@/components/infsh/agent/tool-invocations';
 
 // Component props
 interface AgentProps {

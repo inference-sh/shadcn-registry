@@ -6,7 +6,7 @@
 
 import React, { memo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { MarkdownRenderer } from '@/components/infsh/markdown-renderer';
 import {
   Collapsible,
   CollapsibleContent,

@@ -1,7 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "zoomable-image",
-  "type": "registry:block",
   "title": "Zoomable Image",
   "description": "Click-to-zoom image component with medium.com-style lightbox.",
   "dependencies": [
@@ -18,5 +17,6 @@
       "content": "/* Scoped styles for zoomable-image using react-medium-image-zoom */\n.zoomable-image-dialog [data-rmiz-modal-overlay=\"hidden\"] {\n  background-color: transparent;\n}\n\n.zoomable-image-dialog [data-rmiz-modal-overlay=\"visible\"] {\n  background-color: var(--background);\n}\n\n.zoomable-image-dialog [data-rmiz-btn-unzoom] {\n  background-color: var(--muted);\n  color: var(--muted-foreground);\n}\n\n.zoomable-image-dialog [data-rmiz-btn-unzoom]:focus-visible {\n  outline-offset: 0.25rem;\n  outline: 0.125rem solid var(--ring);\n}",
       "type": "registry:style"
     }
-  ]
+  ],
+  "type": "registry:block"
 }

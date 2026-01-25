@@ -28,7 +28,7 @@ import {
   FileUploadList,
   showFileUploadDialog,
   type FileUpload,
-} from '@/components/agent/file-upload';
+} from '@/components/infsh/agent/file-upload';
 
 interface ChatInputProps {
   placeholder?: string;

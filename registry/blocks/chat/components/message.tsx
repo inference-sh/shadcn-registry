@@ -16,10 +16,10 @@ import {
   ChatMessageStatusCancelled,
 } from '@inferencesh/sdk';
 import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
-import { MessageBubble } from '@/components/agent/message-bubble';
-import { MessageContent } from '@/components/agent/message-content';
-import { MessageReasoning } from '@/components/agent/message-reasoning';
-import { ToolInvocations } from '@/components/agent/tool-invocations';
+import { MessageBubble } from '@/components/infsh/agent/message-bubble';
+import { MessageContent } from '@/components/infsh/agent/message-content';
+import { MessageReasoning } from '@/components/infsh/agent/message-reasoning';
+import { ToolInvocations } from '@/components/infsh/agent/tool-invocations';
 
 function isTerminalChatMessageStatus(status: string | undefined): boolean {
   return status === ChatMessageStatusReady ||

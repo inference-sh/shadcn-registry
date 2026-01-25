@@ -22,8 +22,8 @@ const tocItems: TocItem[] = [
   { id: 'usage', title: 'usage' },
 ]
 
-const usageCode = `import { WidgetRenderer } from '@/components/widgets/widget-renderer'
-import type { Widget, WidgetAction } from '@/registry/blocks/widgets/types'
+const usageCode = `import { WidgetRenderer } from '@/components/infsh/agent/widget-renderer'
+import type { Widget, WidgetAction } from '@/components/infsh/agent/widget-types'
 
 export function MyWidget() {
   const widget: Widget = {

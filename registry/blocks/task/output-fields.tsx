@@ -17,7 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { ChevronDownIcon, ChevronRightIcon, Copy, Check } from 'lucide-react';
 import { FilePreview, type PartialFile } from './file-preview';
-import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { MarkdownRenderer } from '@/components/infsh/markdown-renderer';
 
 /** Field schema (simplified from SDK) */
 export interface Field {

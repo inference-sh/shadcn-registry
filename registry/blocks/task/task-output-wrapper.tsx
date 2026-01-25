@@ -24,7 +24,7 @@ import type { TaskDTO as Task } from '@inferencesh/sdk';
 import type { AgentClient } from '@inferencesh/sdk/agent';
 import { cn } from '@/lib/utils';
 import { useTask } from '@/hooks/use-task';
-import { TaskOutput } from '@/components/task/task-output';
+import { TaskOutput } from '@/components/infsh/task/task-output';
 
 export interface TaskOutputWrapperProps {
   /** The inference client instance (AgentClient compatible) */
