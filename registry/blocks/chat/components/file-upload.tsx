@@ -1,21 +1,27 @@
 /**
  * File Upload Primitives
  *
- * Pure UI components for file selection and preview.
- * Actual uploads are handled by SDK's sendMessage(text, files).
+ * Components for file selection, upload, and preview.
+ * Files are uploaded immediately when selected using SDK's uploadFile action.
  */
 
 import React, { memo, useCallback, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { X, FileIcon } from 'lucide-react';
+import { X, FileIcon, Loader2, AlertCircle, Check } from 'lucide-react';
+import { useAgentActions, type UploadedFile } from '@inferencesh/sdk/agent';
 
 // =============================================================================
 // Types
 // =============================================================================
 
+export type FileUploadStatus = 'pending' | 'uploading' | 'completed' | 'failed';
+
 export interface FileUpload {
   id: string;
   file: File;
+  status: FileUploadStatus;
+  uploadedFile?: UploadedFile;
+  error?: string;
 }
 
 export interface FileUploadManagerState {
@@ -23,23 +29,56 @@ export interface FileUploadManagerState {
   addFiles: (files: File[]) => void;
   removeUpload: (id: string) => void;
   clearAll: () => void;
-  getFiles: () => File[];
+  getUploadedFiles: () => UploadedFile[];
+  hasPendingUploads: boolean;
+  hasCompletedUploads: boolean;
 }
 
 // =============================================================================
-// Hook: useFileUploadManager (pure local state, no SDK dependency)
+// Hook: useFileUploadManager (uploads files on select using SDK)
 // =============================================================================
 
 export function useFileUploadManager(): FileUploadManagerState {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
+  const { uploadFile } = useAgentActions();
+
+  // Upload a single file
+  const uploadSingleFile = useCallback(async (upload: FileUpload) => {
+    // Set status to uploading
+    setUploads(prev => prev.map(u =>
+      u.id === upload.id ? { ...u, status: 'uploading' as FileUploadStatus } : u
+    ));
+
+    try {
+      const uploadedFile = await uploadFile(upload.file);
+      setUploads(prev => prev.map(u =>
+        u.id === upload.id
+          ? { ...u, status: 'completed' as FileUploadStatus, uploadedFile }
+          : u
+      ));
+    } catch (err) {
+      setUploads(prev => prev.map(u =>
+        u.id === upload.id
+          ? { ...u, status: 'failed' as FileUploadStatus, error: String(err) }
+          : u
+      ));
+    }
+  }, [uploadFile]);
 
   const addFiles = useCallback((files: File[]) => {
     const newUploads: FileUpload[] = files.map(file => ({
       id: `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       file,
+      status: 'pending' as FileUploadStatus,
     }));
+
     setUploads(prev => [...prev, ...newUploads]);
-  }, []);
+
+    // Start uploading each file
+    newUploads.forEach(upload => {
+      uploadSingleFile(upload);
+    });
+  }, [uploadSingleFile]);
 
   const removeUpload = useCallback((id: string) => {
     setUploads(prev => prev.filter(u => u.id !== id));
@@ -49,16 +88,23 @@ export function useFileUploadManager(): FileUploadManagerState {
     setUploads([]);
   }, []);
 
-  const getFiles = useCallback(() => {
-    return uploads.map(u => u.file);
+  const getUploadedFiles = useCallback(() => {
+    return uploads
+      .filter(u => u.status === 'completed' && u.uploadedFile)
+      .map(u => u.uploadedFile!);
   }, [uploads]);
+
+  const hasPendingUploads = uploads.some(u => u.status === 'pending' || u.status === 'uploading');
+  const hasCompletedUploads = uploads.some(u => u.status === 'completed');
 
   return {
     uploads,
     addFiles,
     removeUpload,
     clearAll,
-    getFiles,
+    getUploadedFiles,
+    hasPendingUploads,
+    hasCompletedUploads,
   };
 }
 
@@ -112,7 +158,7 @@ export const FileUploadPreview = memo(function FileUploadPreview({
   onRemove,
   className,
 }: FileUploadPreviewProps) {
-  const { file } = upload;
+  const { file, status } = upload;
   const fileType = getFileType(file);
   const previewUrl = (fileType === 'image' || fileType === 'video')
     ? URL.createObjectURL(file)
@@ -139,11 +185,16 @@ export const FileUploadPreview = memo(function FileUploadPreview({
     };
   }, [previewUrl]);
 
+  const isUploading = status === 'pending' || status === 'uploading';
+  const isFailed = status === 'failed';
+  const isCompleted = status === 'completed';
+
   return (
     <div
       className={cn(
         'relative flex items-center gap-2.5 rounded-lg border bg-muted/30 p-1.5 pr-8',
         'max-w-[220px] animate-in fade-in slide-in-from-bottom-2 duration-150',
+        isFailed && 'border-destructive/50 bg-destructive/5',
         className
       )}
     >
@@ -184,12 +235,34 @@ export const FileUploadPreview = memo(function FileUploadPreview({
             </span>
           </div>
         )}
+
+        {/* Upload status overlay */}
+        {isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {isFailed && (
+          <div className="absolute inset-0 flex items-center justify-center bg-destructive/20">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+          </div>
+        )}
+        {isCompleted && (
+          <div className="absolute bottom-0 right-0 rounded-tl bg-emerald-500 p-0.5">
+            <Check className="h-2.5 w-2.5 text-white" />
+          </div>
+        )}
       </div>
 
       {/* File info */}
       <div className="flex-1 min-w-0">
         <p className="truncate text-xs font-medium">{file.name}</p>
-        <p className="text-[10px] text-muted-foreground">{formatFileSize(file.size)}</p>
+        <p className={cn(
+          "text-[10px]",
+          isFailed ? "text-destructive" : "text-muted-foreground"
+        )}>
+          {isFailed ? 'Upload failed' : isUploading ? 'Uploading...' : formatFileSize(file.size)}
+        </p>
       </div>
 
       {/* Remove button */}

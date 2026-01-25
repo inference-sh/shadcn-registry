@@ -95,16 +95,18 @@ export const ChatInput = memo(function ChatInput({
   const containerRef = useRef<HTMLDivElement>(null);
   const dragCounterRef = useRef(0);
 
-  // File upload manager - pure local state, SDK handles actual upload
+  // File upload manager - uploads files on select
   const {
     uploads,
     addFiles,
     removeUpload,
     clearAll,
-    getFiles,
+    getUploadedFiles,
+    hasPendingUploads,
+    hasCompletedUploads,
   } = useFileUploadManager();
 
-  const hasFiles = uploads.length > 0;
+  const completedUploads = uploads.filter(u => u.status === 'completed');
 
   // Auto-resize textarea
   useEffect(() => {
@@ -141,26 +143,29 @@ export const ChatInput = memo(function ChatInput({
   const handleSend = useCallback(async () => {
     const messageText = value.trim();
 
-    // Need either text or files
-    if (!messageText && !hasFiles) return;
+    // Need either text or completed uploads
+    if (!messageText && !hasCompletedUploads) return;
+
+    // Don't send while uploads are in progress
+    if (hasPendingUploads) return;
 
     if (isGenerating) return;
 
-    // Get files for upload
-    const files = getFiles();
+    // Get already-uploaded files
+    const uploadedFiles = getUploadedFiles();
 
     setValue('');
     clearAll();
 
-    // Send message with files - SDK handles upload
-    await sendMessage(messageText, files.length > 0 ? files : undefined);
-  }, [value, hasFiles, isGenerating, getFiles, clearAll, sendMessage]);
+    // Send message with pre-uploaded files
+    await sendMessage(messageText, uploadedFiles.length > 0 ? uploadedFiles : undefined);
+  }, [value, hasCompletedUploads, hasPendingUploads, isGenerating, getUploadedFiles, clearAll, sendMessage]);
 
   // Handle key down
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      // Show command menu when @ is typed (and we have files)
-      if (e.key === '@' && uploads.length > 0) {
+      // Show command menu when @ is typed (and we have completed uploads)
+      if (e.key === '@' && completedUploads.length > 0) {
         e.preventDefault();
         setShowCommandMenu(true);
       }
@@ -176,7 +181,7 @@ export const ChatInput = memo(function ChatInput({
         handleSend();
       }
     },
-    [handleSend, uploads.length]
+    [handleSend, completedUploads.length]
   );
 
   // Handle paste
@@ -253,7 +258,7 @@ export const ChatInput = memo(function ChatInput({
     }
   };
 
-  const canSend = (value.trim().length > 0 || hasFiles) && !isGenerating;
+  const canSend = (value.trim().length > 0 || hasCompletedUploads) && !isGenerating && !hasPendingUploads;
 
   return (
     <div className="relative">
@@ -306,9 +311,9 @@ export const ChatInput = memo(function ChatInput({
               <CommandInput placeholder="search files..." />
               <CommandList>
                 <CommandEmpty>no files uploaded.</CommandEmpty>
-                {uploads.length > 0 && (
+                {completedUploads.length > 0 && (
                   <CommandGroup heading="Files">
-                    {uploads.map((upload) => (
+                    {completedUploads.map((upload) => (
                       <CommandItem
                         key={upload.id}
                         onSelect={() => {
