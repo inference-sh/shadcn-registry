@@ -1,41 +1,33 @@
 #!/bin/bash
 set -euo pipefail
 
-# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR/.."
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
-IMAGE_BASE=inference-sh-shadcn-registry
-BUILD_TAG=${IMAGE_BASE}:build-$(date +%s)
+# Source deploy library
+source "$REPO_ROOT/scripts/deploy-lib.sh"
 
-# Load environment file if provided or use default
+# Config
+PROJECT_NAME="ui"
+IMAGE_BASE="inference-sh-shadcn-registry"
+STACK_NAME="inference-shadcn-registry"
+SERVICE_NAME="inference-shadcn-registry_web"
 ENV_FILE="${1:-.env.production}"
-if [ -f "$PROJECT_DIR/$ENV_FILE" ]; then
-    echo "[*] Loading environment from $ENV_FILE"
-    export $(grep -v '^#' "$PROJECT_DIR/$ENV_FILE" | xargs)
-fi
 
-echo "[*] Initializing Swarm..."
-docker swarm init 2>/dev/null || true
+# Load environment
+load_env "$PROJECT_DIR/$ENV_FILE" || true
 
-echo "[*] Building image from: $PROJECT_DIR"
-docker build -t "$BUILD_TAG" "$PROJECT_DIR"
-docker tag "$BUILD_TAG" "$IMAGE_BASE:latest"
+# Get build version
+BUILD_VERSION=$(get_build_version "$PROJECT_NAME")
+echo "[*] Build version: $BUILD_VERSION"
 
-echo "[*] Deploying stack..."
+# Deploy
+init_swarm
+
+build_image "$IMAGE_BASE" "$PROJECT_DIR" "Dockerfile" "$BUILD_VERSION"
+
 cd "$PROJECT_DIR"
-
-# Deploy with env file if it exists
-if [ -f "$PROJECT_DIR/$ENV_FILE" ]; then
-    docker stack deploy -c docker-compose.yml --env-file "$ENV_FILE" inference-shadcn-registry 2>/dev/null || \
-    docker stack deploy -c docker-compose.yml inference-shadcn-registry
-else
-    docker stack deploy -c docker-compose.yml inference-shadcn-registry
-fi
-
-echo "[*] Forcing service update..."
-docker service update --force inference-shadcn-registry_web
-
-echo "[*] Done."
-echo "[*] Service: inference-shadcn-registry_web"
-echo "[*] View logs: docker service logs inference-shadcn-registry_web"
+deploy_stack "$STACK_NAME" "docker-compose.yml" "$PROJECT_DIR/$ENV_FILE"
+update_service "$SERVICE_NAME"
+print_status "$SERVICE_NAME"
