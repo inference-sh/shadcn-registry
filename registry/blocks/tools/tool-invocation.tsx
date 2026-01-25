@@ -25,7 +25,7 @@ import {
   ToolInvocationStatusCancelled,
   ToolTypeApp,
 } from '@inferencesh/sdk';
-import { useAgentActions, useAgentClient, type ToolInvocationDTO } from '@inferencesh/sdk/agent';
+import { useAgentActions, useAgentClient, type ToolInvocationDTO, type UploadedFile } from '@inferencesh/sdk/agent';
 import { WidgetRenderer } from '@/components/agent/widget-renderer';
 import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/agent/widget-types';
 import { TaskOutputWrapper } from '@/components/task/task-output-wrapper';
@@ -160,7 +160,8 @@ export const ToolInvocation = memo(function ToolInvocation({
   const [isOpen, setIsOpen] = useState(defaultOpen || isAwaitingApprovalStatus || !!widget);
 
   // Get actions: submitToolResult for widgets, approveTool/rejectTool/alwaysAllowTool for HIL approval
-  const { submitToolResult, approveTool, rejectTool, alwaysAllowTool } = useAgentActions();
+  // sendMessage for completed widget actions (e.g., "Create Variation" on finished images)
+  const { submitToolResult, approveTool, rejectTool, alwaysAllowTool, sendMessage } = useAgentActions();
   // Get client for TaskOutputWrapper
   const client = useAgentClient();
 
@@ -274,16 +275,37 @@ export const ToolInvocation = memo(function ToolInvocation({
   }, [status]);
 
 
-  // Handle widget actions (for approval buttons, form submissions, etc.)
+  // Handle widget actions
+  // - For awaiting_input: Submit tool result to continue current turn
+  // - For completed: Send new message with action context (e.g., "Create Variation" on finished images)
   const handleWidgetAction = useCallback(async (action: WidgetAction, formData?: WidgetFormData) => {
-    if (!submitToolResult) return;
+    const isAwaitingInput = status === ToolInvocationStatusAwaitingInput;
 
-    try {
-      await submitToolResult(invocation.id, JSON.stringify({ action, form_data: formData }));
-    } catch (error) {
-      console.error('[ToolInvocation] Failed to submit widget action:', error);
+    if (isAwaitingInput) {
+      // Awaiting input: submit tool result to continue current turn
+      if (!submitToolResult) return;
+      try {
+        await submitToolResult(invocation.id, JSON.stringify({ action, form_data: formData }));
+      } catch (error) {
+        console.error('[ToolInvocation] Failed to submit widget action:', error);
+      }
+    } else {
+      // Completed/other: send as new message to start a new turn
+      if (!sendMessage) return;
+      try {
+        // Build message text from action
+        const actionText = action.payload?.message || action.payload?.text || action.type;
+        // Include image URI if present in payload (for image variations)
+        const files: UploadedFile[] = [];
+        if (action.payload?.image_uri) {
+          files.push({ uri: action.payload.image_uri as string, content_type: 'image/png' });
+        }
+        await sendMessage(String(actionText), files.length > 0 ? files : undefined);
+      } catch (error) {
+        console.error('[ToolInvocation] Failed to send widget action as message:', error);
+      }
     }
-  }, [invocation.id, submitToolResult]);
+  }, [invocation.id, status, submitToolResult, sendMessage]);
 
   // Handle approve/reject for HIL approval (separate from widget submission)
   const handleApprove = useCallback(async () => {
@@ -316,8 +338,9 @@ export const ToolInvocation = memo(function ToolInvocation({
   // Note: hasResult only applies when there's no widget (widgets are handled separately)
   const hasResult = !!invocation.result && !widget && !hasTaskOutput;
 
-  // Widget is interactive only when awaiting input
-  const isWidgetInteractive = status === ToolInvocationStatusAwaitingInput;
+  // Widget is interactive when awaiting input OR completed (for actions like "Create Variation")
+  const isWidgetInteractive = status === ToolInvocationStatusAwaitingInput ||
+    status === ToolInvocationStatusCompleted;
 
   // For finish tool with standard schema (has status field), use custom FinishBlock
   // For custom output schemas, fall through to widget rendering
@@ -431,7 +454,7 @@ export const ToolInvocation = memo(function ToolInvocation({
     );
   }
 
-  // When not interactive (completed/failed), widget will be disabled with no actions
+  // Render widget if present
   if (widget) {
     return (
       <div className={cn('flex flex-col items-start flex-grow-0', className)}>
