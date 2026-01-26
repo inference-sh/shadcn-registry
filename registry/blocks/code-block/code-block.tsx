@@ -105,13 +105,13 @@ export const CodeBlock = memo(function CodeBlock({
   return (
     <div
       className={cn(
-        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-zinc-950',
+        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-zinc-950 min-h-0 h-full flex flex-col',
         className
       )}
     >
       {/* Header bar */}
       {showHeader && (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-zinc-900/50">
+        <div className="flex-none flex items-center justify-between px-4 py-2 border-b border-white/5 bg-zinc-900/50">
           <span className="text-xs text-zinc-500 font-mono">
             {language || 'code'}
           </span>
@@ -124,12 +124,12 @@ export const CodeBlock = memo(function CodeBlock({
               {copied ? (
                 <>
                   <Check className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Copied!</span>
+                  <span>copied!</span>
                 </>
               ) : (
                 <>
                   <Copy className="h-3.5 w-3.5" />
-                  <span>Copy</span>
+                  <span>copy</span>
                 </>
               )}
             </button>
@@ -138,7 +138,7 @@ export const CodeBlock = memo(function CodeBlock({
       )}
 
       {/* Code content */}
-      <pre className="overflow-x-auto p-4">
+      <pre className="flex-1 min-h-0 overflow-auto p-4">
         <code className={cn('grid font-mono', textSize || 'text-sm')}>
           {lines.map((line, i) => (
             <span
