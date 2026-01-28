@@ -41,5 +41,5 @@ pnpm registry:build
 
 ## Links
 
-- [Documentation](https://docs.inference.sh)
+- [Documentation](https://inference.sh/docs)
 - [Registry](https://ui.inference.sh)
