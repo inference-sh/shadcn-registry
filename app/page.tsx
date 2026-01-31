@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRef, useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -15,10 +16,12 @@ import {
   Zap,
   Shield,
   Code2,
-  Palette,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageLayout } from "@/components/page-layout"
 import { CodeBlock } from "@/registry/blocks/code-block/code-block"
@@ -27,9 +30,12 @@ import { WidgetRenderer } from "@/registry/blocks/widgets/widget-renderer"
 import type { Widget, WidgetAction, WidgetFormData } from "@/registry/blocks/widgets/types"
 import type { TocItem } from "@/registry/blocks/table-of-contents/table-of-contents"
 import { cn } from "@/lib/utils"
+import { Agent } from "@/registry/blocks/agent/agent"
+import { createScopedTools, FORM_ASSISTANT_PROMPT } from "./blocks/agent/lib/client-tools"
 
 const tocItems: TocItem[] = [
   { id: "hero", title: "overview" },
+  { id: "live-demo", title: "live demo" },
   { id: "examples", title: "examples" },
   { id: "showcase", title: "showcase" },
   { id: "components", title: "components" },
@@ -39,8 +45,8 @@ const tocItems: TocItem[] = [
 const components = [
   {
     name: "agent",
-    title: "agent chat",
-    description: "full-featured agent chat with streaming, tools, and widgets.",
+    title: "agent",
+    description: "one component. runtime included. tools, streaming, approvals, widgets.",
     href: "/blocks/agent",
     icon: Bot,
     featured: true,
@@ -115,12 +121,12 @@ function CopyButton({ text }: { text: string }) {
 // feature badges
 function FeatureBadges() {
   const features = [
-    { icon: Zap, label: "streaming" },
-    { icon: Wrench, label: "tool support" },
+    { icon: Zap, label: "instant start" },
+    { icon: Activity, label: "runtime included" },
+    { icon: Wrench, label: "tool lifecycle" },
+    { icon: Shield, label: "human-in-the-loop" },
     { icon: Puzzle, label: "widgets" },
-    { icon: Shield, label: "type safe" },
     { icon: Code2, label: "open source" },
-    { icon: Palette, label: "themeable" },
   ]
 
   return (
@@ -131,6 +137,212 @@ function FeatureBadges() {
           <span>{feature.label}</span>
         </div>
       ))}
+    </div>
+  )
+}
+
+// pricing form for live demo
+function PricingForm({ formRef }: { formRef: React.RefObject<HTMLFormElement | null> }) {
+  const [plan, setPlan] = React.useState('pro')
+  const [seats, setSeats] = React.useState('5')
+  const [billing, setBilling] = React.useState('monthly')
+  const [addons, setAddons] = React.useState({ support: false, analytics: true, api: false })
+
+  const basePrice = plan === 'starter' ? 9 : plan === 'pro' ? 29 : 99
+  const seatCount = parseInt(seats) || 1
+  const billingMultiplier = billing === 'yearly' ? 10 : 1
+  const addonPrice = (addons.support ? 19 : 0) + (addons.analytics ? 9 : 0) + (addons.api ? 49 : 0)
+  const total = (basePrice * seatCount + addonPrice) * billingMultiplier
+
+  return (
+    <form
+      ref={formRef}
+      role="form"
+      aria-label="Pricing Configuration Form"
+      className="space-y-6 p-6 border rounded-lg bg-card"
+      onSubmit={(e) => e.preventDefault()}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+        <h3 className="font-semibold" id="form-title">Pricing Configurator</h3>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="plan">Plan</Label>
+          <select
+            id="plan"
+            name="plan"
+            aria-label="Select pricing plan"
+            value={plan}
+            onChange={(e) => setPlan(e.target.value)}
+            className="w-full h-10 px-3 rounded-md border bg-background"
+          >
+            <option value="starter">Starter ($9/seat/mo)</option>
+            <option value="pro">Pro ($29/seat/mo)</option>
+            <option value="enterprise">Enterprise ($99/seat/mo)</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="seats">Number of Seats</Label>
+          <Input
+            id="seats"
+            name="seats"
+            type="number"
+            min="1"
+            max="100"
+            aria-label="Number of user seats"
+            value={seats}
+            onChange={(e) => setSeats(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <fieldset className="space-y-2" role="radiogroup" aria-label="Billing cycle selection">
+        <legend className="text-sm font-medium">Billing Cycle</legend>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="billing"
+              value="monthly"
+              aria-label="Monthly billing"
+              checked={billing === 'monthly'}
+              onChange={(e) => setBilling(e.target.value)}
+              className="rounded"
+            />
+            <span className="text-sm">Monthly</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              name="billing"
+              value="yearly"
+              aria-label="Yearly billing with 2 months free discount"
+              checked={billing === 'yearly'}
+              onChange={(e) => setBilling(e.target.value)}
+              className="rounded"
+            />
+            <span className="text-sm">Yearly (2 months free)</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-2" role="group" aria-label="Optional add-ons">
+        <legend className="text-sm font-medium">Add-ons</legend>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="addon_support"
+              aria-label="Priority Support add-on for $19 per month"
+              checked={addons.support}
+              onChange={(e) => setAddons({ ...addons, support: e.target.checked })}
+              className="rounded"
+            />
+            <span className="text-sm">Priority Support (+$19/mo)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="addon_analytics"
+              aria-label="Advanced Analytics add-on for $9 per month"
+              checked={addons.analytics}
+              onChange={(e) => setAddons({ ...addons, analytics: e.target.checked })}
+              className="rounded"
+            />
+            <span className="text-sm">Advanced Analytics (+$9/mo)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="addon_api"
+              aria-label="API Access add-on for $49 per month"
+              checked={addons.api}
+              onChange={(e) => setAddons({ ...addons, api: e.target.checked })}
+              className="rounded"
+            />
+            <span className="text-sm">API Access (+$49/mo)</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div className="pt-4 border-t" role="status" aria-live="polite" aria-label="Price summary">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Estimated Total</span>
+          <span className="text-2xl font-bold" aria-label={`Total price: $${total.toLocaleString()} per ${billing === 'yearly' ? 'year' : 'month'}`}>
+            ${total.toLocaleString()}/{billing === 'yearly' ? 'yr' : 'mo'}
+          </span>
+        </div>
+      </div>
+    </form>
+  )
+}
+
+// live demo component
+function LiveDemo() {
+  const formRef = useRef<HTMLFormElement>(null)
+
+  const scopedTools = useMemo(
+    () => createScopedTools(formRef),
+    []
+  )
+
+  const systemPrompt = FORM_ASSISTANT_PROMPT + `\n\n## Current Form Context
+
+You are helping users configure a SaaS pricing plan. The form contains:
+
+### Plan Selection (dropdown: "plan")
+- **starter**: $9/seat/month - Basic tier
+- **pro**: $29/seat/month - Most popular
+- **enterprise**: $99/seat/month - Full features
+
+### Number of Seats (input: "seats")
+- Numeric input from 1-100
+- Multiplies the per-seat price
+
+### Billing Cycle (radio: "billing")
+- **monthly**: Pay monthly
+- **yearly**: Pay annually (saves 2 months - 10 months price for 12 months)
+
+### Add-ons (checkboxes)
+- **addon_support**: Priority Support (+$19/mo)
+- **addon_analytics**: Advanced Analytics (+$9/mo)
+- **addon_api**: API Access (+$49/mo)
+
+## Instructions
+
+1. When asked to configure the form, ALWAYS start with \`scan_ui\` to see current state
+2. Use \`fill_field\` with the field name (e.g., "plan", "seats", "billing", "addon_support")
+3. For the cheapest option: starter plan, 1 seat, yearly billing, no add-ons
+4. For radio buttons, use the value (e.g., fill_field("billing", "yearly"))
+5. For checkboxes, use "true"/"false" or "checked"/"unchecked"
+6. After making changes, briefly confirm what you did
+7. Be concise - users want quick help, not lengthy explanations`
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-4">
+      <PricingForm formRef={formRef} />
+      <div className="border rounded-lg overflow-hidden h-[500px]">
+        <Agent
+          proxyUrl="/api/inference/proxy"
+          name="pricing-assistant"
+          allowFiles={false}
+          allowImages={false}
+          config={{
+            core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+            description: 'I can help configure your pricing plan',
+            system_prompt: systemPrompt,
+            tools: scopedTools,
+            example_prompts: [
+              'set me up with the cheapest option',
+              'i need 10 seats with API access',
+              'switch to yearly billing',
+            ],
+          }}
+        />
+      </div>
     </div>
   )
 }
@@ -428,20 +640,20 @@ export default function Home() {
               </Badge>
             </div>
             <h1 className="text-4xl font-bold leading-tight tracking-tighter md:text-5xl lg:text-6xl">
-              the foundation for
+              drop in an agent.
               <br />
-              <span className="bg-gradient-to-r from-foreground via-foreground/80 to-foreground/60 bg-clip-text">ai chat interfaces</span>
+              <span className="bg-gradient-to-r from-foreground via-foreground/80 to-foreground/60 bg-clip-text">ship it.</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl">
-              a set of beautifully designed components for building ai-powered chat applications.
-              copy and paste into your apps. open source. open code.
+              the only batteries-included agent component. tools, streaming, approvals, widgets —
+              all wired to a runtime that handles the hard parts. not a chat template. a complete solution.
             </p>
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row">
             <Button asChild size="lg" className="gap-2">
               <Link href="/blocks/agent">
-                get started
+                try it
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -464,12 +676,23 @@ export default function Home() {
           <FeatureBadges />
         </section>
 
+        {/* live demo section */}
+        <section id="live-demo" className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold">try it</h2>
+            <p className="text-muted-foreground">
+              an agent with client-side tools. it can read and fill the form. no backend required for the tools.
+            </p>
+          </div>
+          <LiveDemo />
+        </section>
+
         {/* examples section with tabs */}
         <section id="examples" className="space-y-6">
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold">examples</h2>
             <p className="text-muted-foreground">
-              interactive demos showcasing the widget renderer.
+              agents return structured output. the widget renderer turns it into interactive ui.
             </p>
           </div>
 
@@ -510,7 +733,7 @@ export default function Home() {
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold">showcase</h2>
             <p className="text-muted-foreground">
-              widget examples powered by declarative json.
+              rich interfaces from json. no custom components needed.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -525,7 +748,7 @@ export default function Home() {
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold">components</h2>
             <p className="text-muted-foreground">
-              everything you need to build ai-powered chat interfaces.
+              agent-native ui. tools, approvals, widgets — built in, not bolted on.
             </p>
           </div>
 
@@ -568,7 +791,7 @@ export default function Home() {
           <div className="space-y-2">
             <h2 className="text-2xl font-semibold">quick start</h2>
             <p className="text-muted-foreground">
-              get up and running in minutes.
+              one component. four steps. production-ready agent ui.
             </p>
           </div>
 
