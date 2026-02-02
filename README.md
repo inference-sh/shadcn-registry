@@ -1,6 +1,11 @@
-# ui.inference.sh
+# ui.inference.sh — ai chat ui components for react & next.js
 
-A shadcn registry of UI components for building AI-powered applications.
+[![npm version](https://img.shields.io/npm/v/@inferencesh/ui.svg)](https://www.npmjs.com/package/@inferencesh/ui)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+a [shadcn](https://ui.shadcn.com) registry of react ui components for building ai-powered applications, chatbots, and ai agent interfaces.
+
+built for [inference.sh](https://inference.sh) — the ai agent runtime for serverless ai inference.
 
 ## Components
 
@@ -39,7 +44,15 @@ Build the registry:
 pnpm registry:build
 ```
 
-## Links
+## links
 
-- [Documentation](https://inference.sh/docs)
-- [Registry](https://ui.inference.sh)
+- [documentation](https://inference.sh/docs) — getting started guides
+- [registry](https://ui.inference.sh) — browse all components
+- [blog](https://inference.sh/blog) — tutorials and guides
+- [app store](https://app.inference.sh) — 150+ ai models
+- [discord](https://discord.gg/RM77SWSbyT) — community
+- [github](https://github.com/inference-sh) — source code
+
+## license
+
+MIT © [inference.sh](https://inference.sh)
