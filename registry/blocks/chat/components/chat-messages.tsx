@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import { Button } from '@/components/ui/button';
 import { ArrowDown } from 'lucide-react';
-import { useAgentChat, type ChatMessageDTO } from '@inferencesh/sdk/agent';
+import { useAgentChat } from '@inferencesh/sdk/agent';
+import { type ChatMessageDTO } from '@inferencesh/sdk';
 
 interface ChatMessagesProps {
   children: (props: { messages: ChatMessageDTO[] }) => ReactNode;

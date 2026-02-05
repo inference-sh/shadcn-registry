@@ -14,8 +14,8 @@ import {
   ChatMessageStatusReady,
   ChatMessageStatusFailed,
   ChatMessageStatusCancelled,
+  type ChatMessageDTO,
 } from '@inferencesh/sdk';
-import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
 import { MessageBubble } from '@/components/infsh/agent/message-bubble';
 import { MessageContent } from '@/components/infsh/agent/message-content';
 import { MessageReasoning } from '@/components/infsh/agent/message-reasoning';

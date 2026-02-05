@@ -7,7 +7,7 @@
 import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { ToolInvocation } from '@/components/infsh/agent/tool-invocation';
-import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
+import type { ChatMessageDTO } from '@inferencesh/sdk';
 
 interface ToolInvocationsProps {
   message: ChatMessageDTO;

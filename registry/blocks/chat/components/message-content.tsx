@@ -15,7 +15,7 @@ import {
   ChatMessageContentTypeImage,
   ChatMessageContentTypeFile,
 } from '@inferencesh/sdk';
-import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
+import type { ChatMessageDTO } from '@inferencesh/sdk';
 
 interface MessageContentProps {
   message: ChatMessageDTO;
@@ -29,9 +29,9 @@ interface MessageContentProps {
 // Helper functions
 // =============================================================================
 
-function getTextContent(message: ChatMessageDTO): string {
+function getTextContent(message: ChatMessageDTO): string | undefined {
   const textContent = message.content.find((c) => c.type === ChatMessageContentTypeText);
-  return textContent?.text ?? '';
+  return textContent?.text;
 }
 
 function getImageUrls(message: ChatMessageDTO): string[] {
@@ -191,9 +191,9 @@ export const MessageContent = memo(function MessageContent({
 
   const [isExpanded, setIsExpanded] = useState(false);
   const MAX_LENGTH = 500;
-  const shouldTruncate = truncate && isUser && textContent.length > MAX_LENGTH;
+  const shouldTruncate = truncate && isUser && (textContent?.length || 0) > MAX_LENGTH;
   const displayContent = shouldTruncate && !isExpanded
-    ? textContent.slice(0, MAX_LENGTH) + '...'
+    ? textContent?.slice(0, MAX_LENGTH) + '...'
     : textContent;
 
   // Don't render if no content
@@ -222,7 +222,7 @@ export const MessageContent = memo(function MessageContent({
       )}
 
       {/* Text content */}
-      {textContent && (
+      {textContent && textContent.length > 0 && (
         <div className="w-full">
           {isUser ? (
             <div className="flex flex-col gap-2">

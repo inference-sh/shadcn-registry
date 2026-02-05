@@ -6,8 +6,7 @@
 
 import React, { memo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { ChatMessageRoleUser } from '@inferencesh/sdk';
-import type { ChatMessageDTO } from '@inferencesh/sdk/agent';
+import { ChatMessageRoleUser, type ChatMessageDTO } from '@inferencesh/sdk';
 
 interface MessageBubbleProps {
   message: ChatMessageDTO;
@@ -47,7 +46,7 @@ export const MessageBubble = memo(function MessageBubble({
           'relative rounded-xl text-sm',
           isUser
             ? 'bg-muted/50 text-foreground max-w-[70%] min-w-0 p-3'
-            : 'text-foreground max-w-full min-w-0',
+            : 'text-foreground max-w-full min-w-0 w-full',
           // Widgets should take full width
           // hasWidget && 'w-full'
         )}

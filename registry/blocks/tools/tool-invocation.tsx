@@ -12,7 +12,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { MessageCircleCode, CheckCircle2, XCircle, Clock, AlertCircle, CheckCircle, CircleDashed } from 'lucide-react';
+import { MessageCircleCode, CheckCircle2, XCircle, Clock, AlertCircle, CheckCircle, CircleDashed, ChevronDown, ChevronRight } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,8 +24,10 @@ import {
   ToolInvocationStatusFailed,
   ToolInvocationStatusCancelled,
   ToolTypeApp,
+  ToolInvocationDTO,
+  PartialFile
 } from '@inferencesh/sdk';
-import { useAgentActions, useAgentClient, type ToolInvocationDTO, type UploadedFile } from '@inferencesh/sdk/agent';
+import { useAgentActions, useAgentClient } from '@inferencesh/sdk/agent';
 import { WidgetRenderer } from '@/components/infsh/agent/widget-renderer';
 import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/infsh/agent/widget-types';
 import { TaskOutputWrapper } from '@/components/infsh/task/task-output-wrapper';
@@ -105,7 +107,7 @@ const FinishBlock = memo(function FinishBlock({
     : null;
 
   return (
-    <div className="my-6 w-full">
+    <div className="my-6 space-y-4">
       <div className="flex items-center gap-4 w-full">
         <div className={cn("flex-1 h-px", getLineColor())} />
         <div className={cn(
@@ -119,11 +121,13 @@ const FinishBlock = memo(function FinishBlock({
         </div>
         <div className={cn("flex-1 h-px", getLineColor())} />
       </div>
-      {resultMessage && (
-        <p className="text-xs text-muted-foreground/40 text-center mt-2 break-words">
-          {resultMessage}
-        </p>
-      )}
+      <div className=" border border-border rounded-md p-4 bg-card w-fit">
+        {resultMessage && (
+          <p className="text-xs text-muted-foreground/40 break-words">
+            {resultMessage}
+          </p>
+        )}
+      </div>
     </div>
   )
 })
@@ -296,7 +300,7 @@ export const ToolInvocation = memo(function ToolInvocation({
         // Build message text from action
         const actionText = action.payload?.message || action.payload?.text || action.type;
         // Include image URI if present in payload (for image variations)
-        const files: UploadedFile[] = [];
+        const files: PartialFile[] = [];
         if (action.payload?.image_uri) {
           files.push({ uri: action.payload.image_uri as string, content_type: 'image/png' });
         }
@@ -430,8 +434,7 @@ export const ToolInvocation = memo(function ToolInvocation({
           open={isOpen}
           onOpenChange={setIsOpen}
           className={cn(
-            'group w-full overflow-hidden rounded text-muted-foreground',
-            isOpen && 'border bg-muted/10'
+            'group w-full text-muted-foreground',
           )}
         >
           <div className="flex items-center px-1 py-0.5">
@@ -441,10 +444,15 @@ export const ToolInvocation = memo(function ToolInvocation({
                 <span className={cn('lowercase', isActive && 'animate-pulse')}>
                   {functionName} {statusText}
                 </span>
+                {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
               </button>
             </CollapsibleTrigger>
           </div>
-          <CollapsibleContent>
+          <CollapsibleContent
+            className={cn(
+              isOpen && 'border border-border bg-muted/10 rounded-xl'
+            )}
+          >
             <div className="border-t p-2">
               <TaskOutputWrapper client={client} taskId={taskId!} compact={true} />
             </div>
@@ -473,8 +481,7 @@ export const ToolInvocation = memo(function ToolInvocation({
         open={isOpen}
         onOpenChange={setIsOpen}
         className={cn(
-          'group w-full overflow-hidden rounded text-muted-foreground',
-          isOpen && 'border bg-muted/10'
+          'group w-full text-muted-foreground',
         )}
       >
         <div className="flex items-center px-1 py-0.5">
@@ -484,11 +491,16 @@ export const ToolInvocation = memo(function ToolInvocation({
               <span className={cn('lowercase', isActive && 'animate-pulse')}>
                 {functionName} {statusText}
               </span>
+              {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             </button>
           </CollapsibleTrigger>
         </div>
-        <CollapsibleContent>
-          <div className="border-t px-2 py-1.5 text-xs space-y-1.5">
+        <CollapsibleContent
+          className={cn(
+            isOpen && 'border border-border bg-muted/10 rounded-xl'
+          )}
+        >
+          <div className="px-2 py-1.5 text-xs space-y-1.5">
             {hasArgs && (
               <div>
                 <div className="text-muted-foreground/50 mb-1">arguments:</div>

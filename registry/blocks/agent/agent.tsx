@@ -18,13 +18,13 @@ import {
   ChatMessageRoleAssistant,
   ChatMessageContentTypeReasoning,
   ChatMessageContentTypeText,
+  type ChatMessageDTO,
 } from '@inferencesh/sdk';
 import {
   AgentChatProvider,
   useAgentChat,
   useAgentActions,
   isAdHocConfig,
-  type ChatMessageDTO,
   type AgentOptions,
 } from '@inferencesh/sdk/agent';
 import { ChatContainer } from '@/components/infsh/agent/chat-container';
