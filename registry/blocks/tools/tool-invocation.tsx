@@ -31,6 +31,7 @@ import { useAgentActions, useAgentClient } from '@inferencesh/sdk/agent';
 import { WidgetRenderer } from '@/components/infsh/agent/widget-renderer';
 import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/infsh/agent/widget-types';
 import { TaskOutputWrapper } from '@/components/infsh/task/task-output-wrapper';
+import { MarkdownRenderer } from '@/registry/blocks/markdown/markdown-renderer';
 
 // Tool finish constants
 const ToolFinishStatusSucceeded = 'succeeded';
@@ -121,12 +122,12 @@ const FinishBlock = memo(function FinishBlock({
         </div>
         <div className={cn("flex-1 h-px", getLineColor())} />
       </div>
-      <div className=" border border-border rounded-md p-4 bg-card w-fit">
+      <div className=" border border-border rounded-md p-4 bg-card w-fit max-w-full">
         {resultMessage && (
-          <p className="text-xs text-muted-foreground/40 break-words">
-            {resultMessage}
-          </p>
+          <MarkdownRenderer compact={true} content={resultMessage} className='w-fit max-w-full' />
         )}
+
+
       </div>
     </div>
   )
