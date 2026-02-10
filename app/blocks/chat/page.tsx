@@ -36,7 +36,7 @@ export function Chat() {
     <AgentChatProvider
       client={client}
       agentConfig={{
-        core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+        core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
         description: 'A helpful assistant',
       }}
     >

@@ -269,7 +269,7 @@ You are helping users configure a SaaS pricing plan. The form contains:
               allowFiles={false}
               allowImages={false}
               config={{
-                core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+                core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
                 description: 'I can help configure your pricing plan',
                 system_prompt: systemPrompt,
                 tools: scopedTools,
@@ -297,7 +297,7 @@ function ImageAgentDemo() {
       <Agent
         proxyUrl="/api/inference/proxy"
         name="image-agent"
-        config={{ agent: 'okaris/shadcn-image@045tep9w' }}
+        config={{ agent: 'okaris/shadcn-image@7tfd7xc2' }}
         description="I can generate images from your descriptions"
         examplePrompts={[
           'a cat wearing a top hat',
@@ -392,7 +392,7 @@ function PricingAssistantDemo() {
         proxyUrl="/api/inference/proxy"
         name="pricing-assistant"
         config={{
-          core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+          core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
           description: 'I can help configure your pricing plan',
           system_prompt: systemPrompt,
           tools: scopedTools,
@@ -674,7 +674,7 @@ export function fillField(root: HTMLElement, field: string, value: string): Prom
             <CodeBlock language="tsx">
               {`<Agent
   proxyUrl="/api/inference/proxy"
-  config={{ agent: 'okaris/shadcn-image@045tep9w' }}
+  config={{ agent: 'okaris/shadcn-image@7tfd7xc2' }}
   description="I can generate images from your descriptions"
   examplePrompts={['a cat wearing a top hat']}
 />`}
@@ -740,7 +740,7 @@ export function ChatAssistant() {
       proxyUrl="/api/inference/proxy"
       name="my-assistant"
       config={{
-        core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+        core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
         description: 'A helpful AI assistant',
         system_prompt: 'You are helpful and concise.',
         example_prompts: [
@@ -771,7 +771,7 @@ function MyAssistant() {
   const client = useMemo(() => new Inference({ proxyUrl: '/api/inference/proxy' }), [])
 
   const agentConfig = {
-    core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+    core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
     system_prompt: FORM_ASSISTANT_PROMPT,
     tools: scopedTools, // Client-side tools that can interact with the DOM
   }

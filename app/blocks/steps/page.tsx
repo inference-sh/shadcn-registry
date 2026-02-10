@@ -88,7 +88,7 @@ export const { GET, POST, PUT } = route;`}</CodeBlock>
                   <CodeBlock language="tsx">{`<Agent
   proxyUrl="/api/inference/proxy"
   agentConfig={{
-    core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+    core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
     description: 'a helpful ai assistant',
     system_prompt: 'you are helpful.',
   }}

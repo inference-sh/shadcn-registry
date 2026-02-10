@@ -95,7 +95,7 @@ export const { GET, POST, PUT } = route;`
 const usageCode = `<Agent
   proxyUrl="/api/inference/proxy"
   agentConfig={{
-    core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+    core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
     description: 'a helpful ai assistant',
     system_prompt: 'you are helpful.',
   }}
@@ -331,7 +331,7 @@ You are helping users configure a SaaS pricing plan. The form contains:
           allowFiles={false}
           allowImages={false}
           config={{
-            core_app: { ref: 'openrouter/claude-haiku-45@0fkg6xwb' },
+            core_app: { ref: 'openrouter/claude-haiku-45@1ps10tmc' },
             description: 'I can help configure your pricing plan',
             system_prompt: systemPrompt,
             tools: scopedTools,
