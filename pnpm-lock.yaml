@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@inferencesh/sdk':
-        specifier: ^0.4.24
-        version: 0.4.24(express@5.2.1)(hono@4.11.5)(next@16.1.4(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: ^0.5.2
+        version: 0.5.2(express@5.2.1)(hono@4.11.5)(next@16.1.4(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-checkbox':
         specifier: ^1.3.3
         version: 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -491,8 +491,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@inferencesh/sdk@0.4.24':
-    resolution: {integrity: sha512-D6swGpItrvJyLOclZdGUjitU8bnfKnNDUvJVlmmo+fKvaK7/+BU+7cZEBJxmbMOzGz0f9fH+1IOBA4j52hQD4g==}
+  '@inferencesh/sdk@0.5.2':
+    resolution: {integrity: sha512-FLpyM9xjGiT2vqa24mym+3RFouEhfapY6RrKgjOlSSAWYyHY+QbyUQj1t3m7xyrbXVpbg5npqyxogsiJT4I3wQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@sveltejs/kit': '>=2.0.0'
@@ -4203,7 +4203,7 @@ snapshots:
   '@img/sharp-win32-x64@0.34.5':
     optional: true
 
-  '@inferencesh/sdk@0.4.24(express@5.2.1)(hono@4.11.5)(next@16.1.4(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
+  '@inferencesh/sdk@0.5.2(express@5.2.1)(hono@4.11.5)(next@16.1.4(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
     dependencies:
       eventsource: 4.1.0
     optionalDependencies:
