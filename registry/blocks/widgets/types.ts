@@ -1,10 +1,3 @@
-/**
- * Widget Types
- *
- * Types for widget rendering in tool outputs.
- */
-
-// Widget type constants
 export const WidgetTypeUI = 'ui';
 export const WidgetTypeHTML = 'html';
 
@@ -85,6 +78,12 @@ const VALID_WIDGET_TYPES = [WidgetTypeUI, "card"];
 export function parseWidget(input: string | Widget | unknown): Widget | null {
   // If it's already a Widget object
   if (input && typeof input === "object") {
+    // Unwrap { widget: { ... } } envelope if present
+    const maybeEnvelope = input as Record<string, unknown>;
+    if (maybeEnvelope.widget && typeof maybeEnvelope.widget === "object") {
+      return parseWidget(maybeEnvelope.widget);
+    }
+
     const widget = input as Widget;
     if (VALID_WIDGET_TYPES.includes(widget.type)) {
       // Normalize "card" to "ui" for consistency
@@ -100,14 +99,8 @@ export function parseWidget(input: string | Widget | unknown): Widget | null {
   if (typeof input === "string") {
     try {
       const parsed = JSON.parse(input);
-      if (parsed?.type && VALID_WIDGET_TYPES.includes(parsed.type)) {
-        // Normalize "card" to "ui" for consistency
-        if (parsed.type === "card") {
-          parsed.type = WidgetTypeUI;
-        }
-        return parsed as Widget;
-      }
-      return null;
+      // Recursively parse - handles both direct widget and { widget: { ... } } envelope
+      return parseWidget(parsed);
     } catch {
       return null;
     }

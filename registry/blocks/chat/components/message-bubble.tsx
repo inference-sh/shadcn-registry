@@ -43,7 +43,7 @@ export const MessageBubble = memo(function MessageBubble({
     >
       <div
         className={cn(
-          'relative rounded-xl text-sm',
+          'relative rounded-xl text-sm break-words whitespace-pre-wrap [&_*]:max-w-full [&_*]:min-w-0',
           isUser
             ? 'bg-muted/50 text-foreground max-w-[70%] min-w-0 p-3'
             : 'text-foreground max-w-full min-w-0 w-full',
