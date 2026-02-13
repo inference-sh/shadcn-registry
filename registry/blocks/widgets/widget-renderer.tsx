@@ -570,9 +570,9 @@ export const WidgetRenderer = React.memo(({ widget, onAction, className, disable
   // Handle string widget (fallback)
   if (typeof widget === "string") {
     return (
-      <Card className={cn("w-full", className)}>
+      <div className={cn("w-min-0 w-max-full border border-border rounded-xl bg-card p-2", className)}>
         <pre>{widget}</pre>
-      </Card>
+      </div>
     )
   }
 
@@ -590,16 +590,12 @@ export const WidgetRenderer = React.memo(({ widget, onAction, className, disable
   if (shouldUseCard) {
     return (
       <WidgetContext.Provider value={{ onAction: handleAction, formData, setFormValue, isDisabled, loadingActionType }}>
-        <Card className={cn("w-full border border-border", className)}>
+        <div className={cn("w-min-0 w-max-full border border-border rounded-xl bg-card p-2", className)}>
           {widget.title && (
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{widget.title}</CardTitle>
-            </CardHeader>
+            <span className="mb-4">{widget.title}</span>
           )}
-          <CardContent>
-            {content}
-          </CardContent>
-        </Card>
+          {content}
+        </div>
       </WidgetContext.Provider>
     )
   }
