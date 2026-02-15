@@ -71,7 +71,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
 
   const textSize = compact ? textSizeMap.compact : textSizeMap.default
   const fontClass = 'legible'
-  const paragraphClass = cn(textSize.p, 'break-words whitespace-pre-wrap my-0 py-0 not-last:mb-4 text-justify leading-relaxed', fontClass)
+  const paragraphClass = cn(textSize.p, 'break-words whitespace-pre-wrap my-0 py-0 text-justify leading-relaxed', fontClass)
 
   return (
     <div className={className}>
@@ -139,7 +139,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
           },
 
           pre: ({ children }) => (
-            <CompactCodeBlock textSize={textSize.pre} className={cn('not-last:mb-4', textSize.pre, fontClass)}>
+            <CompactCodeBlock textSize={textSize.pre} className={cn('not-last:mbb-2', textSize.pre, fontClass)}>
               {children}
             </CompactCodeBlock>
           ),

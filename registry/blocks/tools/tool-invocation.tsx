@@ -7,14 +7,10 @@
 
 import React, { memo, useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { MessageCircleCode, CheckCircle2, XCircle, Clock, AlertCircle, CheckCircle, CircleDashed, ChevronDown, ChevronRight } from 'lucide-react';
+import { MessageCircleCode, CheckCircle2, XCircle, Clock, AlertCircle, CheckCircle, CircleDashed } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import {
   ToolInvocationStatusPending,
   ToolInvocationStatusInProgress,
@@ -430,36 +426,18 @@ export const ToolInvocation = memo(function ToolInvocation({
   // For app tools with task output, show the TaskOutputWrapper
   if (hasTaskOutput) {
     return (
-      <div className={cn('flex flex-col items-start', className)}>
-        <Collapsible
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          className={cn(
-            'group w-full text-muted-foreground',
-          )}
-        >
-          <div className="flex items-center px-1 py-0.5">
-            <CollapsibleTrigger asChild>
-              <button className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground cursor-pointer">
-                {statusIcon}
-                <span className={cn('lowercase', isActive && 'animate-pulse')}>
-                  {functionName} {statusText}
-                </span>
-                {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              </button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent
-            className={cn(
-              isOpen && 'border border-border bg-muted/10 rounded-xl'
-            )}
-          >
-            <div className="border-t p-2">
-              <TaskOutputWrapper client={client} taskId={taskId!} compact={true} />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
+      <CollapsibleSection
+        icon={statusIcon}
+        label={`${functionName} ${statusText}`}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        isActive={isActive}
+        className={className}
+      >
+        <div className="p-2">
+          <TaskOutputWrapper client={client} taskId={taskId!} compact={true} />
+        </div>
+      </CollapsibleSection>
     );
   }
 
@@ -477,54 +455,35 @@ export const ToolInvocation = memo(function ToolInvocation({
   }
 
   return (
-    <div className={cn('flex flex-col items-start w-fit', className)}>
-      <Collapsible
-        open={isOpen}
-        onOpenChange={setIsOpen}
-        className={cn(
-          'group w-full text-muted-foreground',
-        )}
-      >
-        <div className="flex items-center px-1 py-0.5">
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground cursor-pointer">
-              {statusIcon}
-              <span className={cn('lowercase', isActive && 'animate-pulse')}>
-                {functionName} {statusText}
-              </span>
-              {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            </button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent
-          className={cn(
-            isOpen && 'border border-border bg-muted/10 rounded-xl'
-          )}
-        >
-          <div className="px-2 py-1.5 text-xs space-y-1.5">
-            {hasArgs && (
-              <div>
-                <div className="text-muted-foreground/50 mb-1">arguments:</div>
-                <pre className="text-muted-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
-                  {JSON.stringify(invocation.function?.arguments, null, 2)}
-                </pre>
-              </div>
-            )}
-            {/* Render raw result (widgets are handled separately above) */}
-            {hasResult && (
-              <div>
-                <div className="text-muted-foreground/50 mb-1">result:</div>
-                <pre className="text-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
-                  {typeof invocation.result === 'string'
-                    ? invocation.result
-                    : JSON.stringify(invocation.result, null, 2)}
-                </pre>
-              </div>
-            )}
+    <CollapsibleSection
+      icon={statusIcon}
+      label={`${functionName} ${statusText}`}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      isActive={isActive}
+      className={className}
+    >
+      <div className="px-2 py-1.5 text-xs space-y-1.5">
+        {hasArgs && (
+          <div>
+            <div className="text-muted-foreground/50 mb-1">arguments:</div>
+            <pre className="text-muted-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
+              {JSON.stringify(invocation.function?.arguments, null, 2)}
+            </pre>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+        )}
+        {hasResult && (
+          <div>
+            <div className="text-muted-foreground/50 mb-1">result:</div>
+            <pre className="text-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
+              {typeof invocation.result === 'string'
+                ? invocation.result
+                : JSON.stringify(invocation.result, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
   );
 });
 
