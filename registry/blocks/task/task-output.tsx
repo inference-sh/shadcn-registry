@@ -97,7 +97,7 @@ const ErrorContent = memo(function ErrorContent({
   error,
   compact,
 }: {
-  error: string | null;
+  error?: string | null;
   compact: boolean;
 }) {
   const content = (
@@ -132,7 +132,7 @@ const CancelledContent = memo(function CancelledContent({
   message,
   compact,
 }: {
-  message: string;
+  message?: string;
   compact: boolean;
 }) {
   const content = (
