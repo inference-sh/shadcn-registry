@@ -105,13 +105,13 @@ export const CodeBlock = memo(function CodeBlock({
   return (
     <div
       className={cn(
-        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-zinc-950 min-h-0 h-full flex flex-col',
+        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-muted/20 min-h-0 h-full flex flex-col',
         className
       )}
     >
       {/* Header bar */}
       {showHeader && (
-        <div className="flex-none flex items-center justify-between px-4 py-2 border-b border-white/5 bg-zinc-900/50">
+        <div className="flex-none flex items-center justify-between px-4 py-2 border-b border-white/5 bg-muted">
           <span className="text-xs text-zinc-500 font-mono">
             {language || 'code'}
           </span>
