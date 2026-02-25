@@ -11,7 +11,7 @@ import type { TaskDTO as Task, TaskEvent } from '@inferencesh/sdk';
 import {
   TaskStatusReceived,
   TaskStatusQueued,
-  TaskStatusScheduled,
+  TaskStatusDispatched,
   TaskStatusPreparing,
   TaskStatusServing,
   TaskStatusSettingUp,
@@ -32,7 +32,7 @@ export function getStatusColor(status: TaskStatus): string {
   switch (status) {
     case TaskStatusQueued:
       return 'text-yellow-600 bg-yellow-600/15 dark:text-yellow-400 dark:bg-yellow-400/15';
-    case TaskStatusScheduled:
+    case TaskStatusDispatched:
       return 'text-orange-600 bg-orange-600/15 dark:text-orange-400 dark:bg-orange-400/15';
     case TaskStatusPreparing:
     case TaskStatusServing:
@@ -58,8 +58,8 @@ export function getStatusText(status: TaskStatus): string | null {
       return 'received';
     case TaskStatusQueued:
       return 'queued';
-    case TaskStatusScheduled:
-      return 'scheduled';
+    case TaskStatusDispatched:
+      return 'dispatched';
     case TaskStatusPreparing:
       return 'preparing';
     case TaskStatusServing:
@@ -94,7 +94,7 @@ export function getStatusTextFull(status: TaskStatus): string {
 export interface TaskEventTimes {
   received?: string;
   queued?: string;
-  scheduled?: string;
+  dispatched?: string;
   preparing?: string;
   serving?: string;
   settingUp?: string;
@@ -113,7 +113,7 @@ export function extractTaskEventTimes(task: Task): TaskEventTimes {
   return {
     received: findEventTime(TaskStatusReceived),
     queued: findEventTime(TaskStatusQueued),
-    scheduled: findEventTime(TaskStatusScheduled),
+    dispatched: findEventTime(TaskStatusDispatched),
     preparing: findEventTime(TaskStatusPreparing),
     serving: findEventTime(TaskStatusServing),
     settingUp: findEventTime(TaskStatusSettingUp),
