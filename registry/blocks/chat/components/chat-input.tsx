@@ -23,6 +23,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useAgentChat, useAgentActions } from '@inferencesh/sdk/agent';
+import { ChatStatusBusy } from '@inferencesh/sdk';
 import {
   useFileUploadManager,
   FileUploadList,
@@ -85,7 +86,8 @@ export const ChatInput = memo(function ChatInput({
   const showFileButton = allowAttachments !== false && allowFiles;
   const showImageButton = allowAttachments !== false && allowImages;
   const enableAttachments = showFileButton || showImageButton;
-  const { isGenerating, error } = useAgentChat();
+  const { chat, error } = useAgentChat();
+  const isBusy = chat?.status === ChatStatusBusy;
   const { sendMessage, stopGeneration, clearError } = useAgentActions();
 
   const [value, setValue] = useState('');
@@ -101,7 +103,7 @@ export const ChatInput = memo(function ChatInput({
     addFiles,
     removeUpload,
     clearAll,
-    getUploadedFiles,
+    getFileRefs,
     hasPendingUploads,
     hasCompletedUploads,
   } = useFileUploadManager();
@@ -149,17 +151,17 @@ export const ChatInput = memo(function ChatInput({
     // Don't send while uploads are in progress
     if (hasPendingUploads) return;
 
-    if (isGenerating) return;
+    if (isBusy) return;
 
     // Get already-uploaded files
-    const uploadedFiles = getUploadedFiles();
+    const uploadedFiles = getFileRefs();
 
     setValue('');
     clearAll();
 
     // Send message with pre-uploaded files
     await sendMessage(messageText, uploadedFiles.length > 0 ? uploadedFiles : undefined);
-  }, [value, hasCompletedUploads, hasPendingUploads, isGenerating, getUploadedFiles, clearAll, sendMessage]);
+  }, [value, hasCompletedUploads, hasPendingUploads, isBusy, getFileRefs, clearAll, sendMessage]);
 
   // Handle key down
   const handleKeyDown = useCallback(
@@ -258,7 +260,7 @@ export const ChatInput = memo(function ChatInput({
     }
   };
 
-  const canSend = (value.trim().length > 0 || hasCompletedUploads) && !isGenerating && !hasPendingUploads;
+  const canSend = (value.trim().length > 0 || hasCompletedUploads) && !isBusy && !hasPendingUploads;
 
   return (
     <div className="relative">
@@ -362,7 +364,7 @@ export const ChatInput = memo(function ChatInput({
               variant="ghost"
               className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
               onClick={handleAttachmentClick}
-              disabled={isGenerating}
+              disabled={isBusy}
               aria-label="Attach file"
             >
               <Paperclip className="h-4 w-4" />
@@ -375,7 +377,7 @@ export const ChatInput = memo(function ChatInput({
               variant="ghost"
               className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
               onClick={handleImageClick}
-              disabled={isGenerating}
+              disabled={isBusy}
               aria-label="Attach image"
             >
               <ImagePlus className="h-4 w-4" />
@@ -385,7 +387,7 @@ export const ChatInput = memo(function ChatInput({
 
         {/* Right side - send/stop button */}
         <div className="flex items-center gap-2">
-          {isGenerating ? (
+          {isBusy ? (
             <Button
               type="button"
               size="icon"

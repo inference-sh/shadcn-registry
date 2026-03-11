@@ -19,6 +19,7 @@ import {
   ChatMessageContentTypeReasoning,
   ChatMessageContentTypeText,
   type ChatMessageDTO,
+  ChatMessageContent,
 } from '@inferencesh/sdk';
 import {
   AgentChatProvider,
@@ -184,11 +185,12 @@ const MessageList = memo(function MessageList({
 }) {
   // Show typing indicator when generating and last message is user or has no content yet
   const lastMessage = messages[messages.length - 1];
+  const hasTextorReasoning = lastMessage?.content?.some((c: ChatMessageContent) => c.type === ChatMessageContentTypeText || c.type === ChatMessageContentTypeReasoning && c.text?.trim());
   const showTyping =
     isGenerating &&
     (!lastMessage ||
       lastMessage.role === 'user' ||
-      !lastMessage.content?.some(c => c.type === 'text' && c.text?.trim()));
+      !hasTextorReasoning);
 
   return (
     <div className="space-y-4 p-4">
@@ -219,7 +221,8 @@ const AgentContent = memo(function AgentContent({
   description?: string;
   examplePrompts?: string[];
 }) {
-  const { messages, isGenerating } = useAgentChat();
+  const { chat, messages } = useAgentChat();
+  const isGenerating = chat?.status === 'busy';
   const hasMessages = messages.length > 0;
 
   return (

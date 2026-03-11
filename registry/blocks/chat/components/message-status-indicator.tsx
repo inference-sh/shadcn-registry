@@ -54,7 +54,7 @@ export interface MessageStatusIndicatorProps {
  */
 export const MessageStatusIndicator = memo(function MessageStatusIndicator({
   className,
-  size = 18,
+  size = 12,
   showLabel = true,
   label = 'generating...',
 }: MessageStatusIndicatorProps) {
@@ -62,7 +62,7 @@ export const MessageStatusIndicator = memo(function MessageStatusIndicator({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 text-muted-foreground py-1',
+        'flex items-center gap-1 text-muted-foreground py-1',
         className
       )}
     >

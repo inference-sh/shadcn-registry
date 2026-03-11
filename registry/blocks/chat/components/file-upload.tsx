@@ -8,7 +8,7 @@
 import React, { memo, useCallback, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { X, FileIcon, Loader2, AlertCircle, Check } from 'lucide-react';
-import { useAgentActions, type UploadedFile } from '@inferencesh/sdk/agent';
+import { useAgentActions, type FileRef } from '@inferencesh/sdk/agent';
 
 // =============================================================================
 // Types
@@ -20,7 +20,7 @@ export interface FileUpload {
   id: string;
   file: File;
   status: FileUploadStatus;
-  uploadedFile?: UploadedFile;
+  uploadedFile?: FileRef;
   error?: string;
 }
 
@@ -29,7 +29,7 @@ export interface FileUploadManagerState {
   addFiles: (files: File[]) => void;
   removeUpload: (id: string) => void;
   clearAll: () => void;
-  getUploadedFiles: () => UploadedFile[];
+  getFileRefs: () => FileRef[];
   hasPendingUploads: boolean;
   hasCompletedUploads: boolean;
 }
@@ -88,7 +88,7 @@ export function useFileUploadManager(): FileUploadManagerState {
     setUploads([]);
   }, []);
 
-  const getUploadedFiles = useCallback(() => {
+  const getFileRefs = useCallback(() => {
     return uploads
       .filter(u => u.status === 'completed' && u.uploadedFile)
       .map(u => u.uploadedFile!);
@@ -102,7 +102,7 @@ export function useFileUploadManager(): FileUploadManagerState {
     addFiles,
     removeUpload,
     clearAll,
-    getUploadedFiles,
+    getFileRefs,
     hasPendingUploads,
     hasCompletedUploads,
   };
