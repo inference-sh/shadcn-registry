@@ -53,10 +53,12 @@ const DragOverlay = memo(function DragOverlay({ isDragging }: DragOverlayProps) 
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary/50 bg-primary/5 animate-in fade-in duration-150"
+      className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm animate-in fade-in duration-100"
     >
       <div className="flex flex-col items-center gap-2 text-primary">
-        <Paperclip className="h-6 w-6" />
+        <div className="rounded-full bg-primary/20 p-3">
+          <Paperclip className="h-6 w-6" />
+        </div>
         <span className="text-sm font-medium">drop files to upload</span>
       </div>
     </div>
@@ -202,33 +204,40 @@ export const ChatInput = memo(function ChatInput({
     }
 
     if (files.length > 0) {
+      e.preventDefault(); // Prevent filename from being pasted as text
       addFiles(files);
     }
   }, [enableAttachments, addFiles]);
 
   // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
+    if (!enableAttachments) return;
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current++;
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+    // Check for files being dragged
+    if (e.dataTransfer.types.includes('Files')) {
       setIsDragging(true);
     }
-  }, []);
+  }, [enableAttachments]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
+    if (!enableAttachments) return;
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current--;
     if (dragCounterRef.current === 0) {
       setIsDragging(false);
     }
-  }, []);
+  }, [enableAttachments]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (!enableAttachments) return;
     e.preventDefault();
     e.stopPropagation();
-  }, []);
+    // Required to allow drop
+    e.dataTransfer.dropEffect = 'copy';
+  }, [enableAttachments]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
