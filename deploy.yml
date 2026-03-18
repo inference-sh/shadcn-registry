@@ -1,6 +1,6 @@
 name: ui
 image: inference-sh-shadcn-registry
-registry: docker.inference.sh
+registry: hub.inference.sh
 stack: inference-shadcn-registry
 service: inference-shadcn-registry_web
 build_context: .
