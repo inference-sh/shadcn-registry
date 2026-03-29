@@ -21,7 +21,7 @@ import {
   ToolInvocationStatusCancelled,
   ToolTypeApp,
   ToolInvocationDTO,
-  PartialFile
+  FileRef
 } from '@inferencesh/sdk';
 import { useAgentActions, useAgentClient } from '@inferencesh/sdk/agent';
 import { WidgetRenderer } from '@/components/infsh/agent/widget-renderer';
@@ -297,9 +297,9 @@ export const ToolInvocation = memo(function ToolInvocation({
         // Build message text from action
         const actionText = action.payload?.message || action.payload?.text || action.type;
         // Include image URI if present in payload (for image variations)
-        const files: PartialFile[] = [];
+        const files: FileRef[] = [];
         if (action.payload?.image_uri) {
-          files.push({ uri: action.payload.image_uri as string, content_type: 'image/png' });
+          files.push({ uri: action.payload.image_uri as string, filename: 'image.png', content_type: 'image/png' });
         }
         await sendMessage(String(actionText), files.length > 0 ? files : undefined);
       } catch (error) {
