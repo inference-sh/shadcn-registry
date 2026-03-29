@@ -26,19 +26,21 @@ export function codeBlockPlugin(): EmbedPlugin {
     measure: (node) => {
       const lineCount = node.code.split('\n').length
       const hasHeader = !!node.lang
-      // Intrinsic height only — no margin (block coordinator handles gaps)
-      // header(37) + content padding(32) + lines*24 + border(2)
+      // Matches CodeBlock component (with !my-0, showLineNumbers=false):
+      // header: py-2(16) + text-xs leading(18) + border-b(1) = 35
+      // content: p-4(32) + lines * leading-6(24)
+      // border: top(1) + bottom(1)
       const height =
-        (hasHeader ? 37 : 0) + 32 + lineCount * 24 + 2
+        (hasHeader ? 35 : 0) + 32 + lineCount * 24 + 2
       return { kind: 'computed', height }
     },
   }
 }
 
 export function renderCodeBlock(node: CodeBlockNode): React.ReactNode {
-  // Strip my-6 from CodeBlock component — block coordinator handles spacing
+  // Strip my-6 and h-full from CodeBlock — block coordinator handles spacing/sizing
   return (
-    <CodeBlock language={node.lang} showHeader={!!node.lang} showLineNumbers={false} className="!my-0">
+    <CodeBlock language={node.lang} showHeader={!!node.lang} showLineNumbers={false} className="!my-0 !h-auto">
       {node.code}
     </CodeBlock>
   )

@@ -102,7 +102,7 @@ export const Markdown = memo(function Markdown({
   if (!data.result) {
     return (
       <PluginsContext.Provider value={ctx}>
-        <div className={className}>
+        <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {data.blocks.map((block, i) => (
             <FlowBlockRenderer key={i} node={block} />
           ))}
@@ -113,7 +113,7 @@ export const Markdown = memo(function Markdown({
 
   return (
     <PluginsContext.Provider value={ctx}>
-      <div className={className} style={{ position: 'relative', height: data.result.height }}>
+      <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {data.result.blocks.map((block, i) => (
           <MeasuredBlockRenderer key={i} block={block} />
         ))}
@@ -130,13 +130,11 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
   const { plugins, renderers } = usePlugins()
   const node = block.node
 
-  // Plugin-rendered blocks
+  // Plugin-rendered blocks — natural flow, no absolute positioning
   const plugin = findPluginForNode(node, plugins)
   if (plugin) {
     const render = renderers[plugin.name]
-    if (render) {
-      return <div style={absBlock(block.y)}>{render(node)}</div>
-    }
+    if (render) return <>{render(node)}</>
   }
 
   // Built-in block types
@@ -156,10 +154,11 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
 
 function MeasuredInlineBlock({ block, tag: Tag }: { block: MeasuredBlock; tag: 'p' | 'div' }) {
   if (!block.lines) return null
+  const lh = block.lines.length > 0 ? block.height / block.lines.length : 20
   return (
-    <Tag style={{ position: 'absolute', top: block.y, left: 0, height: block.height, width: '100%', margin: 0 }}>
+    <Tag style={{ margin: 0 }}>
       {block.lines.map((line, i) => (
-        <MeasuredLineRenderer key={i} line={line} />
+        <MeasuredLineRenderer key={i} line={line} lineHeight={lh} />
       ))}
     </Tag>
   )
@@ -168,24 +167,19 @@ function MeasuredInlineBlock({ block, tag: Tag }: { block: MeasuredBlock; tag: '
 function MeasuredHeading({ block, level }: { block: MeasuredBlock; level: HeadingNode['level'] }) {
   if (!block.lines) return null
   const Tag = `h${level}` as const
+  const lh = block.lines.length > 0 ? block.height / block.lines.length : 20
   return (
-    <Tag style={{ position: 'absolute', top: block.y, left: 0, height: block.height, width: '100%', margin: 0 }}>
+    <Tag style={{ margin: 0 }}>
       {block.lines.map((line, i) => (
-        <MeasuredLineRenderer key={i} line={line} />
+        <MeasuredLineRenderer key={i} line={line} lineHeight={lh} />
       ))}
     </Tag>
   )
 }
 
-function MeasuredLineRenderer({ line }: { line: MeasuredLine }) {
+function MeasuredLineRenderer({ line, lineHeight }: { line: MeasuredLine; lineHeight: number }) {
   return (
-    <span
-      style={{
-        position: 'absolute', top: line.y, left: 0,
-        display: 'flex', alignItems: 'baseline', flexWrap: 'nowrap', gap: 0,
-        width: 'max-content',
-      }}
-    >
+    <span style={{ display: 'block', height: lineHeight, whiteSpace: 'nowrap' }}>
       {line.fragments.map((frag, i) => (
         <FragmentRenderer key={i} fragment={frag} />
       ))}
@@ -194,41 +188,30 @@ function MeasuredLineRenderer({ line }: { line: MeasuredLine }) {
 }
 
 function FragmentRenderer({ fragment }: { fragment: LineFragment }) {
-  const style: React.CSSProperties = {
-    display: 'inline-block',
-    whiteSpace: 'pre',
-    font: fragment.font,
-    verticalAlign: 'baseline',
-  }
-  if (fragment.leadingGap > 0) style.marginLeft = fragment.leadingGap
+  const style: React.CSSProperties = { font: fragment.font }
+  const space = fragment.leadingGap > 0 ? ' ' : ''
 
   if (fragment.isCode) {
     return (
-      <code
+      <>{space}<code
         className="bg-foreground/[0.06] rounded px-1 py-0.5"
-        style={{ ...style, font: fragment.font }}
-      >
-        {fragment.text}
-      </code>
+        style={style}
+      >{fragment.text}</code></>
     )
   }
 
   let content: React.ReactNode = fragment.text
   if (fragment.isStrikethrough) content = <del>{content}</del>
   if (fragment.href) {
-    return <a href={fragment.href} className="underline text-primary" style={style}>{content}</a>
+    return <>{space}<a href={fragment.href} className="underline text-primary" style={style}>{content}</a></>
   }
-  return <span style={style}>{content}</span>
+  return <>{space}<span style={style}>{content}</span></>
 }
-
-const absBlock = (y: number, height?: number): React.CSSProperties => ({
-  position: 'absolute', top: y, left: 0, width: '100%', height, margin: 0,
-})
 
 function MeasuredBlockquote({ block }: { block: MeasuredBlock }) {
   const node = block.node as BlockNode & { kind: 'blockquote' }
   return (
-    <blockquote className="border-l-2 border-muted-foreground/30 pl-4" style={absBlock(block.y, block.height)}>
+    <blockquote className="border-l-2 border-muted-foreground/30 pl-4">
       {node.children.map((child, i) => (
         <div key={i} className="text-sm">
           {child.kind === 'paragraph' ? <FlowInlineItems items={child.items} /> : null}
@@ -242,11 +225,7 @@ function MeasuredList({ block }: { block: MeasuredBlock }) {
   const node = block.node as BlockNode & { kind: 'list' }
   const Tag = node.ordered ? 'ol' : 'ul'
   return (
-    <Tag
-      className={node.ordered ? 'list-decimal pl-6' : 'list-disc pl-6'}
-      style={{ ...absBlock(block.y, block.height), display: 'flex', flexDirection: 'column' }}
-      start={node.start}
-    >
+    <Tag className={node.ordered ? 'list-decimal pl-6' : 'list-disc pl-6'} start={node.start}>
       {node.items.map((itemBlocks, i) => (
         <li key={i} className="text-sm leading-5">
           {itemBlocks.map((child, j) =>

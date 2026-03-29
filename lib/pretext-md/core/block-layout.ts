@@ -17,20 +17,9 @@ import type {
   EmbedMeasurement,
 } from './types'
 
-// Gap between adjacent blocks depends on the pair.
-// Inline blocks (paragraph, heading) include lineHeight which provides natural spacing.
-// Standalone blocks (image, video, code-block, hr) need explicit gaps.
-const GAP_TIGHT = 0       // paragraph → code-block, paragraph → paragraph
-const GAP_BLOCK = 16      // around standalone embeds (image, video, code-block, hr)
-
-function isStandaloneBlock(kind: BlockNode['kind']): boolean {
-  return kind === 'code-block' || kind === 'image' || kind === 'hr'
-}
-
-function gapBetween(above: BlockNode, below: BlockNode): number {
-  if (isStandaloneBlock(above.kind) || isStandaloneBlock(below.kind)) return GAP_BLOCK
-  return GAP_TIGHT
-}
+// Uniform gap between all blocks — like space-y on a flex container.
+// Blocks own zero margin; the coordinator owns all spacing.
+const BLOCK_GAP = 12
 // hr default height (overridable by plugin)
 const HR_HEIGHT = 1
 // blockquote left padding + border
@@ -92,9 +81,7 @@ export function measureBlocks(
     mb.y = y
     measured.push(mb)
     y += mb.height
-    if (i < blocks.length - 1) {
-      y += gapBetween(block, blocks[i + 1]!)
-    }
+    if (i < blocks.length - 1) y += BLOCK_GAP
   }
 
   const totalLines = measured.reduce((sum, b) => sum + (b.lines?.length ?? 0), 0)
@@ -181,7 +168,7 @@ function measureList(block: BlockNode & { kind: 'list' }, config: MeasureConfig)
     const itemBlocks = block.items[i]!
     const inner = measureBlocks(itemBlocks, innerConfig)
     totalHeight += inner.height
-    if (i < block.items.length - 1) totalHeight += GAP_TIGHT
+    // no gap between list items — lineHeight provides natural spacing
   }
   return { node: block, height: totalHeight, y: 0 }
 }
