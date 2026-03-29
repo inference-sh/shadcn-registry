@@ -24,6 +24,7 @@
       "type": "registry:block",
       "title": "Chat UI Primitives",
       "description": "Visual building blocks: chat container, messages, input, and status indicators.",
+      "dependencies": ["@chenglou/pretext"],
       "registryDependencies": [
         "button", "scroll-area", "textarea", "tooltip", "spinner", "command", "popover",
         "https://ui.inference.sh/r/markdown.json"
@@ -38,7 +39,9 @@
         { "path": "registry/blocks/chat/components/message-reasoning.tsx", "type": "registry:component", "target": "components/infsh/agent/message-reasoning.tsx" },
         { "path": "registry/blocks/chat/components/message-status-indicator.tsx", "type": "registry:component", "target": "components/infsh/agent/message-status-indicator.tsx" },
         { "path": "registry/blocks/chat/components/file-upload.tsx", "type": "registry:component", "target": "components/infsh/agent/file-upload.tsx" },
-        { "path": "registry/blocks/chat/lib/use-auto-scroll.ts", "type": "registry:hook", "target": "hooks/use-auto-scroll.ts" }
+        { "path": "registry/blocks/chat/lib/use-auto-scroll.ts", "type": "registry:hook", "target": "hooks/use-auto-scroll.ts" },
+        { "path": "hooks/use-shrinkwrap.ts", "type": "registry:hook", "target": "hooks/use-shrinkwrap.ts" },
+        { "path": "hooks/use-chat-width.ts", "type": "registry:hook", "target": "hooks/use-chat-width.ts" }
       ]
     },
     {
