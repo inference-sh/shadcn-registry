@@ -9,7 +9,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { TaskDTO as Task } from '@inferencesh/sdk';
 import type { AgentClient } from '@inferencesh/sdk/agent';
 import {
-  StreamManager,
+  StreamableManager,
   TaskStatusCompleted,
   TaskStatusFailed,
   TaskStatusCancelled
@@ -82,7 +82,7 @@ export function useTask({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const streamManagerRef = useRef<StreamManager<Task> | null>(null);
+  const streamManagerRef = useRef<StreamableManager<Task> | null>(null);
   const taskRef = useRef<Task | null>(null);
 
   // Keep task ref in sync
@@ -104,15 +104,13 @@ export function useTask({
     // Stop any existing stream
     stopStream();
 
-    const manager = new StreamManager<Task>({
-      createEventSource: async () => {
-        return client.http.createEventSource(`/tasks/${taskId}/stream`);
-      },
-      autoReconnect,
-      maxReconnects,
-      reconnectDelayMs: 1000,
+    const { url, headers } = client.http.getStreamableConfig(`/tasks/${taskId}/stream`);
+
+    const manager = new StreamableManager<Task>({
+      url,
+      headers,
       onStart: () => setIsStreaming(true),
-      onStop: () => setIsStreaming(false),
+      onEnd: () => setIsStreaming(false),
       onError: (err) => {
         setError(err);
         onError?.(err);
@@ -123,7 +121,7 @@ export function useTask({
 
         if (isTerminalStatus(taskData.status)) {
           onComplete?.(taskData);
-          manager.stopAfter(500);
+          manager.stop();
         }
       },
       onPartialData: (partialData: Task, fields: string[]) => {
@@ -141,7 +139,7 @@ export function useTask({
 
           if (isTerminalStatus(mergedTask.status)) {
             onComplete?.(mergedTask);
-            manager.stopAfter(500);
+            manager.stop();
           }
         } else {
           setTask(partialData);
@@ -151,7 +149,7 @@ export function useTask({
     });
 
     streamManagerRef.current = manager;
-    manager.connect();
+    manager.start();
   }, [taskId, client, autoReconnect, maxReconnects, onUpdate, onComplete, onError, stopStream]);
 
   const fetchTask = useCallback(async () => {
