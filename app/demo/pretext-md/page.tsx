@@ -1,12 +1,14 @@
 'use client'
 
-import React, { useState, useLayoutEffect, useMemo } from 'react'
+import React, { useState, useLayoutEffect, useMemo, useRef } from 'react'
 import { Markdown } from '@/lib/pretext-md/react'
 import { parse } from '@/lib/pretext-md/core'
 import { measureBlocks } from '@/lib/pretext-md/core/block-layout'
 import { shrinkwrap } from '@/lib/pretext-md/core/shrinkwrap'
 import { defaultConfig } from '@/lib/pretext-md/react/context'
 import { defaultPlugins } from '@/lib/pretext-md/react/plugins'
+import { useVirtualize, useScrollTop } from '@/lib/pretext-md/react/use-virtualize'
+import type { MeasuredBlock, BlockNode } from '@/lib/pretext-md/core'
 
 // --- Sample content ---
 
@@ -256,6 +258,9 @@ export default function PretextMdDemo() {
           )}
         </section>
 
+        {/* ==================== VIRTUALIZATION ==================== */}
+        {mounted && <VirtualizedChatDemo />}
+
         {/* ==================== EDITOR ==================== */}
         <section>
           <h2 className="text-lg font-bold mb-1">try it</h2>
@@ -311,5 +316,220 @@ function ShrinkwrapBubble({
         )}
       </div>
     </div>
+  )
+}
+
+// --- Virtualized chat demo ---
+
+const RICH_MESSAGE = `## Features
+
+- **Bold** and *italic* and ~~strikethrough~~
+- Inline \`code\` with proper measurement
+- [Links](https://example.com) that work
+- Mixed **bold and *bold italic*** text
+
+\`\`\`typescript
+import { measure, shrinkwrap } from 'pretext-md'
+
+const result = measure(markdown, {
+  maxWidth: 400,
+  fonts: { body: '14px "Inter"' },
+})
+
+result.height    // exact total height in px
+result.lineCount // total lines across all blocks
+\`\`\`
+
+---
+
+![Big Buck Bunny](https://www.youtube.com/watch?v=aqz-KE-bpKQ)
+
+![A mountain landscape](https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80)
+
+> Pretext proved that text measurement can be **pure arithmetic** — zero DOM reads, zero reflows.`
+
+function generateMessages(count: number): { text: string; isUser: boolean }[] {
+  const msgs: { text: string; isUser: boolean }[] = []
+  for (let i = 0; i < count; i++) {
+    msgs.push({
+      text: RICH_MESSAGE,
+      isUser: i % 2 === 1,
+    })
+  }
+  return msgs
+}
+
+type MeasuredMessage = {
+  text: string
+  isUser: boolean
+  shrinkWidth: number
+  contentWidth: number
+  height: number
+  y: number
+}
+
+function measureMessages(
+  messages: { text: string; isUser: boolean }[],
+  maxBubbleWidth: number,
+  gap: number,
+): { items: MeasuredMessage[]; totalHeight: number } {
+  const items: MeasuredMessage[] = []
+  const paddingX = 12
+  const paddingY = 8
+
+  // Measure unique texts once, reuse for duplicates
+  const cache = new Map<string, { shrinkWidth: number; contentWidth: number; height: number }>()
+
+  function measureText(text: string) {
+    const cached = cache.get(text)
+    if (cached) return cached
+
+    const contentWidth = maxBubbleWidth - paddingX * 2
+    const config = {
+      maxWidth: contentWidth,
+      fonts: defaultConfig.fonts,
+      lineHeights: defaultConfig.lineHeights,
+      plugins: plugins,
+    }
+    const blocks = parse(text)
+    const result = measureBlocks(blocks, config)
+
+    const entry = {
+      shrinkWidth: maxBubbleWidth,
+      contentWidth,
+      height: result.height + paddingY * 2,
+    }
+    cache.set(text, entry)
+    return entry
+  }
+
+  let y = 0
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i]!
+    const m = measureText(msg.text)
+    items.push({ text: msg.text, isUser: msg.isUser, ...m, y })
+    y += m.height + gap
+  }
+
+  return { items, totalHeight: y > 0 ? y - gap : 0 }
+}
+
+function VirtualizedChatDemo() {
+  const [messageCount, setMessageCount] = useState(1000)
+  const [maxBubble, setMaxBubble] = useState(360)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollTop = useScrollTop(scrollRef)
+  const viewportHeight = 500
+  const gap = 8
+
+  const messages = useMemo(() => generateMessages(messageCount), [messageCount])
+  const measured = useMemo(
+    () => measureMessages(messages, maxBubble, gap),
+    [messages, maxBubble, gap],
+  )
+
+  // Binary search for visible range
+  const visible = useMemo(() => {
+    const items = measured.items
+    if (items.length === 0) return { start: 0, end: 0 }
+
+    const viewBottom = scrollTop + viewportHeight
+    let start = 0
+    let end = items.length - 1
+
+    // First visible
+    let lo = 0, hi = items.length - 1
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1
+      if (items[mid]!.y + items[mid]!.height < scrollTop) lo = mid + 1
+      else hi = mid
+    }
+    start = Math.max(0, lo - 3) // overscan
+
+    // Last visible
+    lo = start; hi = items.length - 1
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >>> 1
+      if (items[mid]!.y > viewBottom) hi = mid - 1
+      else lo = mid
+    }
+    end = Math.min(items.length, lo + 4) // overscan
+
+    return { start, end }
+  }, [measured.items, scrollTop, viewportHeight])
+
+  const renderedCount = visible.end - visible.start
+
+  return (
+    <section>
+      <h2 className="text-lg font-bold mb-1">virtualization</h2>
+      <p className="text-sm text-muted-foreground mb-4">
+        {messageCount.toLocaleString()} chat bubbles, all pre-measured. Only the visible ones are in the DOM.
+        Heights are known before render — no estimation, no jumping.
+      </p>
+
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
+        <label className="text-sm font-medium whitespace-nowrap">
+          Messages: {messageCount.toLocaleString()}
+        </label>
+        <input
+          type="range"
+          min={100}
+          max={5000}
+          step={100}
+          value={messageCount}
+          onChange={(e) => setMessageCount(Number(e.target.value))}
+          className="flex-1 max-w-xs"
+        />
+        <label className="text-sm font-medium whitespace-nowrap">
+          Bubble max: {maxBubble}px
+        </label>
+        <input
+          type="range"
+          min={200}
+          max={500}
+          value={maxBubble}
+          onChange={(e) => setMaxBubble(Number(e.target.value))}
+          className="flex-1 max-w-xs"
+        />
+      </div>
+
+      <div className="flex gap-3 mb-3 text-xs flex-wrap">
+        <span className="bg-muted rounded px-2 py-1">{messageCount.toLocaleString()} total</span>
+        <span className="bg-primary/10 text-primary rounded px-2 py-1">{renderedCount} in DOM</span>
+        <span className="bg-muted rounded px-2 py-1">{Math.round(measured.totalHeight).toLocaleString()}px total height</span>
+        <span className="bg-muted rounded px-2 py-1">scroll {Math.round(scrollTop)}px</span>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="border border-border rounded-xl bg-muted/30 overflow-y-auto"
+        style={{ height: viewportHeight }}
+      >
+        <div style={{ height: measured.totalHeight, position: 'relative' }}>
+          {measured.items.slice(visible.start, visible.end).map((msg, i) => (
+            <div
+              key={visible.start + i}
+              style={{
+                position: 'absolute',
+                top: msg.y,
+                left: 0,
+                right: 0,
+                padding: '0 16px',
+              }}
+            >
+              <div className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`rounded-2xl px-3 py-2 text-sm ${msg.isUser ? 'bg-primary text-primary-foreground' : 'bg-background border border-border'}`}
+                  style={{ width: msg.shrinkWidth, maxWidth: maxBubble }}
+                >
+                  <Markdown content={msg.text} maxWidth={msg.contentWidth} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   )
 }
