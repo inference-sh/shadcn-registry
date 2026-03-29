@@ -1,8 +1,4 @@
-// Shrinkwrap — binary search for the tightest width that preserves line count.
-//
-// For mixed-font markdown content, this uses the inline layout engine's
-// countInlineLines (which uses pretext per-run) rather than pretext's
-// single-font layout directly.
+// Shrinkwrap — binary search for the tightest width that preserves total height.
 
 import { parse } from './parser'
 import { measureBlocks } from './block-layout'
@@ -25,26 +21,29 @@ export function shrinkwrap(
   const initial = measureBlocks(blocks, config)
 
   if (initial.lineCount <= 1) {
-    // single line — shrinkwrap to content width
     const maxFragWidth = getMaxContentWidth(initial)
     return { width: maxFragWidth, height: initial.height }
   }
 
+  // Reuse a single config object, mutating maxWidth per iteration
+  const searchConfig = { ...config }
   let lo = 1
   let hi = Math.ceil(config.maxWidth)
+  let lastHeight = initial.height
 
   while (lo < hi) {
-    const mid = Math.floor((lo + hi) / 2)
-    const candidate = measureBlocks(blocks, { ...config, maxWidth: mid })
+    const mid = (lo + hi) >>> 1
+    searchConfig.maxWidth = mid
+    const candidate = measureBlocks(blocks, searchConfig)
     if (candidate.height <= initial.height) {
       hi = mid
+      lastHeight = candidate.height
     } else {
       lo = mid + 1
     }
   }
 
-  const final = measureBlocks(blocks, { ...config, maxWidth: lo })
-  return { width: lo, height: final.height }
+  return { width: lo, height: lastHeight }
 }
 
 function getMaxContentWidth(result: MeasureResult): number {

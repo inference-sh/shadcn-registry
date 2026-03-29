@@ -1,5 +1,5 @@
 export { parse } from './parser'
-export { layoutInline, countInlineLines } from './inline-layout'
+export { layoutInline } from './inline-layout'
 export { measureBlocks } from './block-layout'
 export { shrinkwrap } from './shrinkwrap'
 export type {

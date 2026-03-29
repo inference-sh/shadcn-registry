@@ -25,7 +25,6 @@ import type {
 
 type PreparedTextItem = {
   kind: 'text'
-  className: string
   font: string
   fontStyle: FontStyle
   chromeWidth: number
@@ -127,7 +126,7 @@ function flattenRuns(items: InlineItem[], fonts: FontConfig, out: RawRun[], pare
   }
 }
 
-function prepareRuns(runs: RawRun[], fonts: FontConfig): PreparedItem[] {
+function prepareRuns(runs: RawRun[]): PreparedItem[] {
   const out: PreparedItem[] = []
   let pendingGap = 0
 
@@ -151,7 +150,6 @@ function prepareRuns(runs: RawRun[], fonts: FontConfig): PreparedItem[] {
 
     out.push({
       kind: 'text',
-      className: '',
       font: run.font,
       fontStyle: run.fontStyle,
       chromeWidth: run.chromeWidth,
@@ -172,7 +170,7 @@ function prepareRuns(runs: RawRun[], fonts: FontConfig): PreparedItem[] {
 function flattenAndPrepare(items: InlineItem[], fonts: FontConfig): PreparedItem[] {
   const runs: RawRun[] = []
   flattenRuns(items, fonts, runs)
-  return prepareRuns(runs, fonts)
+  return prepareRuns(runs)
 }
 
 // --- Cursor helpers ---
@@ -251,7 +249,6 @@ function layoutPreparedItems(items: PreparedItem[], maxWidth: number): RawLine[]
         if (fullWidth <= remainingWidth) {
           fragments.push({
             text: item.fullText,
-            x: 0, // not used in gap-based layout
             width: item.fullWidth + item.chromeWidth,
             font: item.font,
             fontStyle: item.fontStyle,
@@ -296,7 +293,6 @@ function layoutPreparedItems(items: PreparedItem[], maxWidth: number): RawLine[]
 
       fragments.push({
         text: line.text,
-        x: 0,
         width: line.width + item.chromeWidth,
         font: item.font,
         fontStyle: item.fontStyle,

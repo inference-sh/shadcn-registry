@@ -135,7 +135,6 @@ export type MeasuredLine = {
 
 export type LineFragment = {
   text: string
-  x: number         // unused in gap-based layout, kept for canvas renderers
   width: number
   font: string      // resolved CSS font string
   fontStyle: FontStyle

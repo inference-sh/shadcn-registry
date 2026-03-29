@@ -23,6 +23,8 @@ import {
   renderImage,
 } from './plugins'
 
+const DEFAULT_PLUGINS = defaultPlugins()
+
 // --- Plugin render registry ---
 // Maps plugin name → render function. Plugins own both measure and render.
 
@@ -76,7 +78,7 @@ export const Markdown = memo(function Markdown({
   renderers: userRenderers,
 }: MarkdownProps) {
   const config = usePretextMdConfig()
-  const plugins = userPlugins ?? defaultPlugins()
+  const plugins = userPlugins ?? DEFAULT_PLUGINS
   const renderers = useMemo(
     () => ({ ...defaultRenderers, ...userRenderers }),
     [userRenderers],
@@ -142,7 +144,7 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
     case 'paragraph':
       return <MeasuredInlineBlock block={block} tag="p" />
     case 'heading':
-      return <MeasuredHeading block={block} level={node.level} />
+      return <MeasuredInlineBlock block={block} tag={`h${node.level}`} />
     case 'blockquote':
       return <MeasuredBlockquote block={block} />
     case 'list':
@@ -152,21 +154,9 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
   }
 }
 
-function MeasuredInlineBlock({ block, tag: Tag }: { block: MeasuredBlock; tag: 'p' | 'div' }) {
+function MeasuredInlineBlock({ block, tag }: { block: MeasuredBlock; tag: string }) {
   if (!block.lines) return null
-  const lh = block.lines.length > 0 ? block.height / block.lines.length : 20
-  return (
-    <Tag style={{ margin: 0 }}>
-      {block.lines.map((line, i) => (
-        <MeasuredLineRenderer key={i} line={line} lineHeight={lh} />
-      ))}
-    </Tag>
-  )
-}
-
-function MeasuredHeading({ block, level }: { block: MeasuredBlock; level: HeadingNode['level'] }) {
-  if (!block.lines) return null
-  const Tag = `h${level}` as const
+  const Tag = tag as any
   const lh = block.lines.length > 0 ? block.height / block.lines.length : 20
   return (
     <Tag style={{ margin: 0 }}>

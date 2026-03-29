@@ -1,49 +1,15 @@
 'use client'
 
 import { useMemo } from 'react'
-import { prepare, layout, type PreparedText } from '@chenglou/pretext'
+import { shrinkwrap } from '@/lib/pretext-md/core/shrinkwrap'
+import { defaultConfig } from '@/lib/pretext-md/react/context'
+import type { FontConfig, LineHeightConfig } from '@/lib/pretext-md/core/types'
 
 /**
- * font string must match the CSS font shorthand for the element being measured.
- * e.g. '14px "DM Sans", sans-serif'
- */
-const DEFAULT_FONT = '14px "DM Sans", sans-serif'
-const DEFAULT_LINE_HEIGHT = 20
-
-/**
- * computes the tightest bubble width that preserves line count.
- * returns undefined if text is empty or single-line (no shrinkwrap needed).
- */
-function shrinkwrap(
-  prepared: PreparedText,
-  maxWidth: number,
-  lineHeight: number,
-): number | undefined {
-  if (maxWidth <= 0) return undefined
-
-  const initial = layout(prepared, maxWidth, lineHeight)
-  if (initial.lineCount <= 1) return undefined
-
-  let lo = 1
-  let hi = Math.ceil(maxWidth)
-
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi) / 2)
-    if (layout(prepared, mid, lineHeight).lineCount <= initial.lineCount) {
-      hi = mid
-    } else {
-      lo = mid + 1
-    }
-  }
-
-  return lo
-}
-
-/**
- * hook that returns the tightest pixel width for a text string
- * that preserves the same line count as the original max width.
+ * Hook that returns the tightest pixel width for a markdown string
+ * that preserves the same total height.
  *
- * returns undefined when shrinkwrap isn't needed (empty, single line).
+ * Returns undefined when shrinkwrap isn't needed (empty, single line).
  */
 export function useShrinkwrap(
   text: string | undefined,
@@ -51,12 +17,11 @@ export function useShrinkwrap(
   options?: {
     font?: string
     lineHeight?: number
-    /** horizontal padding on each side (default: 12 for p-3) */
     paddingX?: number
   },
 ): number | undefined {
-  const font = options?.font ?? DEFAULT_FONT
-  const lineHeight = options?.lineHeight ?? DEFAULT_LINE_HEIGHT
+  const font = options?.font ?? defaultConfig.fonts.body
+  const lineHeight = options?.lineHeight ?? defaultConfig.lineHeights.body
   const paddingX = options?.paddingX ?? 12
 
   return useMemo(() => {
@@ -64,10 +29,18 @@ export function useShrinkwrap(
     const contentWidth = maxWidth - paddingX * 2
     if (contentWidth <= 0) return undefined
 
-    const prepared = prepare(text, font)
-    const tightContentWidth = shrinkwrap(prepared, contentWidth, lineHeight)
-    if (tightContentWidth === undefined) return undefined
+    const fonts: FontConfig = {
+      ...defaultConfig.fonts,
+      body: font,
+      bold: `bold ${font}`,
+      italic: `italic ${font}`,
+      boldItalic: `bold italic ${font}`,
+    }
+    const lineHeights: LineHeightConfig = { ...defaultConfig.lineHeights, body: lineHeight }
 
-    return tightContentWidth + paddingX * 2
+    const result = shrinkwrap(text, { maxWidth: contentWidth, fonts, lineHeights })
+    if (result.width >= contentWidth) return undefined
+
+    return result.width + paddingX * 2
   }, [text, maxWidth, paddingX, font, lineHeight])
 }

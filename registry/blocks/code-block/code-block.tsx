@@ -105,20 +105,20 @@ export const CodeBlock = memo(function CodeBlock({
   return (
     <div
       className={cn(
-        'relative group/codeblock my-6 rounded-xl border border-border overflow-hidden bg-muted/20 min-h-0 h-full flex flex-col',
+        'relative group/codeblock my-6 rounded-lg border border-border overflow-hidden bg-muted/20 min-h-0 h-full flex flex-col',
         className
       )}
     >
       {/* Header bar */}
       {showHeader && (
-        <div className="flex-none flex items-center justify-between px-4 py-2 border-b border-white/5 bg-muted">
+        <div className="flex-none flex items-center justify-between px-2 py-2 border-b border-white/5 bg-muted">
           <span className="text-xs text-zinc-500 font-mono">
             {language || 'code'}
           </span>
           {showCopyButton && (
             <button
               onClick={handleCopy}
-              className="cursor-pointer flex items-center gap-1.5 px-2 py-1 rounded text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+              className="cursor-pointer flex items-center gap-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
               aria-label="Copy code"
             >
               {copied ? (

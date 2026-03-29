@@ -83,9 +83,9 @@ function useMeasure(markdown: string, width: number, mounted: boolean) {
   }, [markdown, width, mounted])
 }
 
-function useBubbleShrinkwrap(text: string, maxWidth: number, mounted: boolean) {
+function useBubbleShrinkwrap(text: string, maxWidth: number) {
   return useMemo(() => {
-    if (!mounted || maxWidth <= 0) return null
+    if (maxWidth <= 0) return null
     const contentMax = maxWidth - PADDING_X * 2
     const config = {
       maxWidth: contentMax,
@@ -98,7 +98,7 @@ function useBubbleShrinkwrap(text: string, maxWidth: number, mounted: boolean) {
       shrinkHeight: sw.height,
       fullWidth: maxWidth,
     }
-  }, [text, maxWidth, mounted])
+  }, [text, maxWidth])
 }
 
 // --- Main page ---
@@ -181,7 +181,7 @@ export default function PretextMdDemo() {
               </div>
               <div className="space-y-2">
                 {BUBBLE_MESSAGES.map((msg, i) => (
-                  <ShrinkwrapBubble key={i} text={msg} maxWidth={bubbleMax} isUser={i % 2 === 1} mounted={mounted} />
+                  <ShrinkwrapBubble key={i} text={msg} maxWidth={bubbleMax} isUser={i % 2 === 1} />
                 ))}
               </div>
             </div>
@@ -291,11 +291,11 @@ function FitContentBubble({ text, maxWidth, isUser }: { text: string; maxWidth: 
 }
 
 function ShrinkwrapBubble({
-  text, maxWidth, isUser, mounted,
+  text, maxWidth, isUser,
 }: {
-  text: string; maxWidth: number; isUser: boolean; mounted: boolean
+  text: string; maxWidth: number; isUser: boolean
 }) {
-  const sw = useBubbleShrinkwrap(text, maxWidth, mounted)
+  const sw = useBubbleShrinkwrap(text, maxWidth)
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -428,44 +428,13 @@ function VirtualizedChatDemo() {
     [messages, maxBubble, gap],
   )
 
-  // Binary search for visible range
-  const visible = useMemo(() => {
-    const items = measured.items
-    if (items.length === 0) return { start: 0, end: 0 }
-
-    const viewBottom = scrollTop + viewportHeight
-    let start = 0
-    let end = items.length - 1
-
-    // First visible
-    let lo = 0, hi = items.length - 1
-    while (lo < hi) {
-      const mid = (lo + hi) >>> 1
-      if (items[mid]!.y + items[mid]!.height < scrollTop) lo = mid + 1
-      else hi = mid
-    }
-    start = Math.max(0, lo - 3) // overscan
-
-    // Last visible
-    lo = start; hi = items.length - 1
-    while (lo < hi) {
-      const mid = (lo + hi + 1) >>> 1
-      if (items[mid]!.y > viewBottom) hi = mid - 1
-      else lo = mid
-    }
-    end = Math.min(items.length, lo + 4) // overscan
-
-    return { start, end }
-  }, [measured.items, scrollTop, viewportHeight])
-
-  const renderedCount = visible.end - visible.start
+  const virtual = useVirtualize(measured.items, scrollTop, viewportHeight)
 
   return (
     <section>
       <h2 className="text-lg font-bold mb-1">virtualization</h2>
       <p className="text-sm text-muted-foreground mb-4">
         {messageCount.toLocaleString()} chat bubbles, all pre-measured. Only the visible ones are in the DOM.
-        Heights are known before render — no estimation, no jumping.
       </p>
 
       <div className="flex items-center gap-4 mb-4 flex-wrap">
@@ -495,10 +464,9 @@ function VirtualizedChatDemo() {
       </div>
 
       <div className="flex gap-3 mb-3 text-xs flex-wrap">
-        <span className="bg-muted rounded px-2 py-1">{messageCount.toLocaleString()} total</span>
-        <span className="bg-primary/10 text-primary rounded px-2 py-1">{renderedCount} in DOM</span>
-        <span className="bg-muted rounded px-2 py-1">{Math.round(measured.totalHeight).toLocaleString()}px total height</span>
-        <span className="bg-muted rounded px-2 py-1">scroll {Math.round(scrollTop)}px</span>
+        <span className="bg-muted rounded px-2 py-1">{virtual.totalCount.toLocaleString()} total</span>
+        <span className="bg-primary/10 text-primary rounded px-2 py-1">{virtual.renderedCount} in DOM</span>
+        <span className="bg-muted rounded px-2 py-1">{Math.round(virtual.totalHeight).toLocaleString()}px scroll height</span>
       </div>
 
       <div
@@ -506,17 +474,11 @@ function VirtualizedChatDemo() {
         className="border border-border rounded-xl bg-muted/30 overflow-y-auto"
         style={{ height: viewportHeight }}
       >
-        <div style={{ height: measured.totalHeight, position: 'relative' }}>
-          {measured.items.slice(visible.start, visible.end).map((msg, i) => (
+        <div style={{ height: virtual.totalHeight, position: 'relative' }}>
+          {virtual.items.map((msg) => (
             <div
-              key={visible.start + i}
-              style={{
-                position: 'absolute',
-                top: msg.y,
-                left: 0,
-                right: 0,
-                padding: '0 16px',
-              }}
+              key={msg.y}
+              style={{ position: 'absolute', top: msg.y, left: 0, right: 0, padding: '0 16px' }}
             >
               <div className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
                 <div
