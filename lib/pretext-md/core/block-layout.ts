@@ -177,11 +177,11 @@ function measureBlockquote(block: BlockNode & { kind: 'blockquote' }, config: Me
 
 function measureCodeBlock(block: CodeBlockNode, config: MeasureConfig): MeasuredBlock {
   const hasHeader = !!block.lang
-  const contentWidth = config.maxWidth - CODE_BLOCK.paddingX
   const lineHeight = config.lineHeights.code
   const font = config.fonts.code
 
-  const lines = layoutCodeLines(block.code, contentWidth, font, lineHeight)
+  // Code doesn't wrap — one visual line per physical line, horizontal scroll for overflow.
+  const lines = layoutCodeLines(block.code, font, lineHeight)
   const contentHeight = lines.length * lineHeight
   const height =
     (hasHeader ? CODE_BLOCK.headerHeight : 0) +
@@ -193,13 +193,12 @@ function measureCodeBlock(block: CodeBlockNode, config: MeasureConfig): Measured
 }
 
 /**
- * Layout code text into measured lines using pretext.
- * Each physical line (split by \n) is measured independently,
- * and may wrap to multiple visual lines.
+ * Layout code text into measured lines.
+ * One visual line per physical line — no wrapping.
+ * Long lines scroll horizontally via overflow-x on the pre element.
  */
 function layoutCodeLines(
   code: string,
-  maxWidth: number,
   font: string,
   lineHeight: number,
 ): MeasuredLine[] {
@@ -219,38 +218,22 @@ function layoutCodeLines(
       continue
     }
 
+    // Measure full line width (no wrapping — unbounded width)
     const prepared = prepareWithSegments(codeLine, font)
     const whole = layoutNextLine(prepared, CODE_LINE_START, CODE_UNBOUNDED)
-    if (!whole) {
-      lines.push({ fragments: [], width: 0, y })
-      y += lineHeight
-      continue
-    }
 
-    let cursor: LayoutCursor = CODE_LINE_START
-    while (true) {
-      const line = layoutNextLine(prepared, cursor, maxWidth)
-      if (!line) break
-      if (cursor.segmentIndex === line.end.segmentIndex &&
-          cursor.graphemeIndex === line.end.graphemeIndex) break
-
-      lines.push({
-        fragments: [{
-          text: line.text,
-          width: line.width,
-          font,
-          fontStyle: 'body',
-          leadingGap: 0,
-        }],
-        width: line.width,
-        y,
-      })
-      y += lineHeight
-      cursor = line.end
-
-      if (cursor.segmentIndex === whole.end.segmentIndex &&
-          cursor.graphemeIndex === whole.end.graphemeIndex) break
-    }
+    lines.push({
+      fragments: [{
+        text: whole?.text ?? codeLine,
+        width: whole?.width ?? 0,
+        font,
+        fontStyle: 'body',
+        leadingGap: 0,
+      }],
+      width: whole?.width ?? 0,
+      y,
+    })
+    y += lineHeight
   }
 
   return lines
