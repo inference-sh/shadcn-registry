@@ -26,13 +26,16 @@ export function positionItems<T>(
   width: number,
   gap: number = 0,
   heightOverrides?: Map<string | number, number>,
+  strategyFallback?: Map<string | number, number>,
 ): { positioned: PositionedItem<T>[]; totalHeight: number } {
   const positioned: PositionedItem<T>[] = []
   let y = 0
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i]!
-    const height = heightOverrides?.get(item.id) ?? resolveHeight(item.strategy, width)
+    const height = heightOverrides?.get(item.id)
+      ?? strategyFallback?.get(item.id)
+      ?? resolveHeight(item.strategy, width)
     positioned.push({ id: item.id, data: item.data, height, y })
     y += height
     if (i < items.length - 1) y += gap

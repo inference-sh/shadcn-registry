@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useCallback, useRef, useState, useLayoutEffect } from 'react'
+import { flushSync } from 'react-dom'
 import type { VirtualItem, PositionedItem } from './types'
-import { positionItems } from './measure'
+import { positionItems, resolveHeight } from './measure'
 import { useVirtualize, useScrollState } from '@/hooks/use-virtualize'
 
 export type VirtualizedListResult<T> = {
@@ -26,17 +27,17 @@ export function useVirtualizedList<T>(
   const scroll = useScrollState()
   const getScrollEl = scroll.getElement
 
-  // Height cache: used for spacer sizing. Survives unmount.
+  // Height cache: measured DOM heights, used for spacer sizing.
   const heightCache = useRef(new Map<string | number, number>())
 
-  // Baseline: first measured height per item (= collapsed state).
-  // On unmount, cache resets to baseline so spacer matches remount height.
-  const baseline = useRef(new Map<string | number, number>())
+  // Baseline: first measured height per mount (= collapsed state).
+  const baselineCache = useRef(new Map<string | number, number>())
 
-  // Version counter — bumped (max once per frame) when cache changes.
+  // Version counter — triggers re-position when cache changes.
   const [version, setVersion] = useState(0)
-  const rafScheduled = useRef(false)
 
+  // rAF-batched version bump for normal RO updates (item mount).
+  const rafScheduled = useRef(false)
   function scheduleVersionBump() {
     if (rafScheduled.current) return
     rafScheduled.current = true
@@ -46,10 +47,22 @@ export function useVirtualizedList<T>(
     })
   }
 
-  // Pending scroll correction from unmount resets.
+  // Microtask-batched flushSync for expanded-item unmount.
+  // Forces spacer + scrollTop to update in the same paint frame.
+  const flushScheduled = useRef(false)
+  function scheduleFlush() {
+    if (flushScheduled.current) return
+    flushScheduled.current = true
+    queueMicrotask(() => {
+      flushScheduled.current = false
+      flushSync(() => setVersion(v => v + 1))
+      // useLayoutEffect runs inside flushSync re-render → applies pendingCorrection
+    })
+  }
+
+  // Pending scroll correction accumulated during unmount.
   const pendingCorrection = useRef(0)
 
-  // Apply correction before paint.
   useLayoutEffect(() => {
     if (pendingCorrection.current !== 0) {
       const el = getScrollEl()
@@ -58,11 +71,21 @@ export function useVirtualizedList<T>(
     }
   })
 
-  // Position items using cached heights (falls back to strategy).
+  // Precompute strategy heights once per items/width change.
+  // Avoids re-calling expensive measure() on version bumps.
+  const strategyHeights = useMemo(() => {
+    const m = new Map<string | number, number>()
+    for (const item of items) {
+      m.set(item.id, resolveHeight(item.strategy, width))
+    }
+    return m
+  }, [items, width])
+
+  // Position items using cached heights → strategy fallback.
   const { positioned, totalHeight } = useMemo(
-    () => positionItems(items, width, gap, heightCache.current),
+    () => positionItems(items, width, gap, heightCache.current, strategyHeights),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items, width, gap, version],
+    [items, width, gap, version, strategyHeights],
   )
 
   // Y-position lookup for "above viewport?" check
@@ -90,8 +113,8 @@ export function useVirtualizedList<T>(
         const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
 
         // Set baseline on first measurement (collapsed height)
-        if (!baseline.current.has(id)) {
-          baseline.current.set(id, h)
+        if (!baselineCache.current.has(id)) {
+          baselineCache.current.set(id, h)
         }
 
         const prev = heightCache.current.get(id)
@@ -123,8 +146,8 @@ export function useVirtualizedList<T>(
         }
         itemElements.current.set(id, el)
         elementToId.current.set(el, id)
-        // Reset baseline so next RO callback captures fresh collapsed height
-        baseline.current.delete(id)
+        // Reset baseline for fresh collapsed measurement
+        baselineCache.current.delete(id)
         ro?.observe(el)
       } else {
         // Unmount
@@ -135,22 +158,24 @@ export function useVirtualizedList<T>(
         }
         itemElements.current.delete(id)
 
-        // Reset cache to baseline (collapsed height).
-        // If item was expanded, correct scrollTop.
+        // If item was expanded beyond baseline, reset + correct
         const cached = heightCache.current.get(id)
-        const base = baseline.current.get(id)
+        const base = baselineCache.current.get(id)
         if (cached !== undefined && base !== undefined && Math.abs(cached - base) > 1) {
+          // Reset cache to baseline (what remount will render)
           heightCache.current.set(id, base)
 
-          // Scroll correction only if item above viewport
+          // Scroll correction only if item was above viewport
           const scrollEl = getScrollEl()
           if (scrollEl) {
             const itemY = yLookup.current.get(id) ?? 0
             if (itemY + cached <= scrollEl.scrollTop) {
               pendingCorrection.current += base - cached
-              scheduleVersionBump()
             }
           }
+
+          // Atomic: spacer update + scroll correction in same paint frame
+          scheduleFlush()
         }
       }
     }
@@ -167,7 +192,7 @@ export function useVirtualizedList<T>(
       if (!currentIds.has(id)) {
         refCallbacks.current.delete(id)
         heightCache.current.delete(id)
-        baseline.current.delete(id)
+        baselineCache.current.delete(id)
       }
     }
     prevItemIds.current = currentIds

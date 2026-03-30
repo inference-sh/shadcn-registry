@@ -227,7 +227,7 @@ function ChatMessageRenderer({ message, maxWidth }: {
             </div>
           ))}
           {message.content && (
-            <Markdown content={message.content} maxWidth={isUser ? maxWidth * 0.7 - 24 : maxWidth - 24} />
+            <Markdown content={message.content} maxWidth={isUser ? maxWidth * 0.7 - 24 : undefined} />
           )}
         </div>
       </div>

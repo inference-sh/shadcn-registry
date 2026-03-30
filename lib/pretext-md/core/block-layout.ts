@@ -4,10 +4,17 @@
 // Block types like code-block, image, hr are measured by plugins — the coordinator
 // only handles paragraph, heading, list, blockquote natively.
 
+import {
+  prepareWithSegments,
+  layoutNextLine,
+  type LayoutCursor,
+} from '@chenglou/pretext'
 import { layoutInline } from './inline-layout'
 import type {
   BlockNode,
+  CodeBlockNode,
   MeasuredBlock,
+  MeasuredLine,
   MeasureConfig,
   MeasureResult,
   FontConfig,
@@ -26,6 +33,17 @@ const HR_HEIGHT = 1
 const BLOCKQUOTE_INDENT = 20
 // list item indent
 const LIST_INDENT = 24
+
+// Code block chrome dimensions (must match renderer CSS)
+export const CODE_BLOCK = {
+  headerHeight: 33,  // py-2 (16px) + text-xs line (16px) + border-b (1px)
+  paddingX: 32,      // p-4 left + right
+  paddingY: 32,      // p-4 top + bottom
+  border: 2,         // border top + bottom
+} as const
+
+const CODE_LINE_START: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
+const CODE_UNBOUNDED = 100_000
 
 function getHeadingFont(level: HeadingNode['level']): keyof FontConfig {
   return `h${level}` as keyof FontConfig
@@ -107,8 +125,7 @@ function measureBlock(block: BlockNode, config: MeasureConfig): MeasuredBlock {
     case 'heading':
       return measureHeading(block, config)
     case 'code-block':
-      // fallback if no plugin: rough estimate
-      return { node: block, height: block.code.split('\n').length * 20 + 24, y: 0 }
+      return measureCodeBlock(block, config)
     case 'hr':
       return { node: block, height: HR_HEIGHT, y: 0 }
     case 'image':
@@ -155,7 +172,88 @@ function measureBlockquote(block: BlockNode & { kind: 'blockquote' }, config: Me
     maxWidth: config.maxWidth - BLOCKQUOTE_INDENT,
   }
   const inner = measureBlocks(block.children, innerConfig)
-  return { node: block, height: inner.height, y: 0 }
+  return { node: block, height: inner.height, y: 0, children: inner.blocks }
+}
+
+function measureCodeBlock(block: CodeBlockNode, config: MeasureConfig): MeasuredBlock {
+  const hasHeader = !!block.lang
+  const contentWidth = config.maxWidth - CODE_BLOCK.paddingX
+  const lineHeight = config.lineHeights.code
+  const font = config.fonts.code
+
+  const lines = layoutCodeLines(block.code, contentWidth, font, lineHeight)
+  const contentHeight = lines.length * lineHeight
+  const height =
+    (hasHeader ? CODE_BLOCK.headerHeight : 0) +
+    CODE_BLOCK.paddingY +
+    contentHeight +
+    CODE_BLOCK.border
+
+  return { node: block, height, y: 0, lines }
+}
+
+/**
+ * Layout code text into measured lines using pretext.
+ * Each physical line (split by \n) is measured independently,
+ * and may wrap to multiple visual lines.
+ */
+function layoutCodeLines(
+  code: string,
+  maxWidth: number,
+  font: string,
+  lineHeight: number,
+): MeasuredLine[] {
+  const lines: MeasuredLine[] = []
+  const physicalLines = code.split('\n')
+
+  // Remove trailing empty line from trailing newline
+  if (physicalLines.length > 0 && physicalLines[physicalLines.length - 1] === '') {
+    physicalLines.pop()
+  }
+
+  let y = 0
+  for (const codeLine of physicalLines) {
+    if (codeLine === '') {
+      lines.push({ fragments: [], width: 0, y })
+      y += lineHeight
+      continue
+    }
+
+    const prepared = prepareWithSegments(codeLine, font)
+    const whole = layoutNextLine(prepared, CODE_LINE_START, CODE_UNBOUNDED)
+    if (!whole) {
+      lines.push({ fragments: [], width: 0, y })
+      y += lineHeight
+      continue
+    }
+
+    let cursor: LayoutCursor = CODE_LINE_START
+    while (true) {
+      const line = layoutNextLine(prepared, cursor, maxWidth)
+      if (!line) break
+      if (cursor.segmentIndex === line.end.segmentIndex &&
+          cursor.graphemeIndex === line.end.graphemeIndex) break
+
+      lines.push({
+        fragments: [{
+          text: line.text,
+          width: line.width,
+          font,
+          fontStyle: 'body',
+          leadingGap: 0,
+        }],
+        width: line.width,
+        y,
+      })
+      y += lineHeight
+      cursor = line.end
+
+      if (cursor.segmentIndex === whole.end.segmentIndex &&
+          cursor.graphemeIndex === whole.end.graphemeIndex) break
+    }
+  }
+
+  return lines
 }
 
 function measureList(block: BlockNode & { kind: 'list' }, config: MeasureConfig): MeasuredBlock {
@@ -164,11 +262,13 @@ function measureList(block: BlockNode & { kind: 'list' }, config: MeasureConfig)
     maxWidth: config.maxWidth - LIST_INDENT,
   }
   let totalHeight = 0
+  const measuredItems: MeasuredBlock[][] = []
   for (let i = 0; i < block.items.length; i++) {
     const itemBlocks = block.items[i]!
     const inner = measureBlocks(itemBlocks, innerConfig)
+    measuredItems.push(inner.blocks)
     totalHeight += inner.height
     // no gap between list items — lineHeight provides natural spacing
   }
-  return { node: block, height: totalHeight, y: 0 }
+  return { node: block, height: totalHeight, y: 0, items: measuredItems }
 }

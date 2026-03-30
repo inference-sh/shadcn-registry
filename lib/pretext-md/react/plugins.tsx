@@ -103,5 +103,6 @@ export function hrPlugin(): EmbedPlugin {
 
 export function defaultPlugins(): EmbedPlugin[] {
   // Order matters: youtube must come before image (youtube images are also ImageNodes)
-  return [codeBlockPlugin(), youtubePlugin(), imagePlugin(), hrPlugin()]
+  // Code blocks are handled natively (pretext-measured) — not a plugin anymore.
+  return [youtubePlugin(), imagePlugin(), hrPlugin()]
 }

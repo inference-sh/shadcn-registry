@@ -124,7 +124,9 @@ export type MeasuredBlock = {
   node: BlockNode
   height: number
   y: number
-  lines?: MeasuredLine[]  // for paragraph/heading blocks
+  lines?: MeasuredLine[]          // for paragraph/heading/code blocks
+  children?: MeasuredBlock[]      // for blockquote inner blocks
+  items?: MeasuredBlock[][]       // for list items (each item = array of measured blocks)
 }
 
 export type MeasuredLine = {
