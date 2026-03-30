@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useSyncExternalStore, useCallback, useRef } from 'react'
+import { useMemo, useState, useCallback, useRef } from 'react'
 
 type Positioned = { y: number; height: number }
 
@@ -15,10 +15,6 @@ export type VirtualRange<T extends Positioned> = {
 
 const OVERSCAN = 3
 
-/**
- * Given items with known y/height, return only the visible range
- * for the current scroll position. Pure arithmetic — no DOM measurement.
- */
 export function useVirtualize<T extends Positioned>(
   items: T[],
   scrollTop: number,
@@ -36,7 +32,7 @@ export function useVirtualize<T extends Positioned>(
     let end = bsearchLast(items, scrollTop + viewportHeight)
 
     start = Math.max(0, start - OVERSCAN)
-    end = Math.min(items.length, end + OVERSCAN + 1) // exclusive
+    end = Math.min(items.length, end + OVERSCAN + 1)
 
     return {
       startIndex: start,
@@ -70,24 +66,34 @@ function bsearchLast(items: Positioned[], target: number): number {
 }
 
 /**
- * Track scroll position of a container element.
+ * Track scroll position. Returns [scrollTop, refCallback].
+ * Pass refCallback as the scroll container's ref.
  */
-export function useScrollTop(ref: React.RefObject<HTMLElement | null>): number {
-  const scrollTopRef = useRef(0)
+export type ScrollState = {
+  scrollTop: number
+  refCallback: (el: HTMLDivElement | null) => void
+  getElement: () => HTMLDivElement | null
+}
 
-  const subscribe = useCallback(
-    (cb: () => void) => {
-      const el = ref.current
-      if (!el) return () => {}
-      const handler = () => {
-        scrollTopRef.current = el.scrollTop
-        cb()
-      }
-      el.addEventListener('scroll', handler, { passive: true })
-      return () => el.removeEventListener('scroll', handler)
-    },
-    [ref],
-  )
+export function useScrollState(): ScrollState {
+  const [scrollTop, setScrollTop] = useState(0)
+  const elRef = useRef<HTMLDivElement | null>(null)
+  const handlerRef = useRef(() => {
+    if (elRef.current) setScrollTop(elRef.current.scrollTop)
+  })
 
-  return useSyncExternalStore(subscribe, useCallback(() => scrollTopRef.current, []), () => 0)
+  const refCallback = useCallback((el: HTMLDivElement | null) => {
+    if (elRef.current) {
+      elRef.current.removeEventListener('scroll', handlerRef.current)
+    }
+    elRef.current = el
+    if (el) {
+      el.addEventListener('scroll', handlerRef.current, { passive: true })
+      setScrollTop(el.scrollTop)
+    }
+  }, [])
+
+  const getElement = useCallback(() => elRef.current, [])
+
+  return { scrollTop, refCallback, getElement }
 }

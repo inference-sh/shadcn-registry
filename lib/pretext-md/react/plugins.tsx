@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { prepare, layout } from '@chenglou/pretext'
 import type {
   CodeBlockNode,
   ImageNode,
@@ -19,19 +20,29 @@ function getYouTubeVideoId(url: string): string | null {
 
 // --- Code block plugin ---
 
+// Code block uses pretext to measure monospace content.
+// Monospace = every char same width = pretext measurement is trivially exact.
+const CODE_FONT = '14px "DM Mono", "Fira Code", ui-monospace, monospace'
+const CODE_LINE_HEIGHT = 24 // leading-6
+const CODE_HEADER = 36      // py-2 + text-xs + border-b
+const CODE_PADDING = 32     // p-4 top + bottom
+const CODE_BORDER = 2       // top + bottom
+
 export function codeBlockPlugin(): EmbedPlugin {
   return {
     name: 'code-block',
     match: (node) => node.kind === 'code-block',
-    measure: (node) => {
-      const lineCount = node.code.split('\n').length
+    measure: (node, maxWidth) => {
       const hasHeader = !!node.lang
-      // Matches CodeBlock component (with !my-0, showLineNumbers=false):
-      // header: py-2(16) + text-xs leading(18) + border-b(1) = 35
-      // content: p-4(32) + lines * leading-6(24)
-      // border: top(1) + bottom(1)
+      // Use pretext to measure the code content with monospace font
+      const contentWidth = maxWidth - 32 // p-4 left + right
+      const prepared = prepare(node.code, CODE_FONT, { whiteSpace: 'pre-wrap' })
+      const result = layout(prepared, contentWidth, CODE_LINE_HEIGHT)
       const height =
-        (hasHeader ? 35 : 0) + 32 + lineCount * 24 + 2
+        (hasHeader ? CODE_HEADER : 0) +
+        CODE_PADDING +
+        result.height +
+        CODE_BORDER
       return { kind: 'computed', height }
     },
   }
@@ -68,7 +79,9 @@ export function imagePlugin(): EmbedPlugin {
   return {
     name: 'image',
     match: (node) => node.kind === 'image',
-    measure: () => ({ kind: 'fixed', height: 300 }),
+    // Images load async — height unknown until load.
+    // Use aspect-ratio 16:9 as default estimate, capped at 400px.
+    measure: (_, maxWidth) => ({ kind: 'aspect-ratio', ratio: 16 / 9, maxHeight: 400 }),
   }
 }
 

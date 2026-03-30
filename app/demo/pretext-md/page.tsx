@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useLayoutEffect, useMemo, useRef } from 'react'
+import React, { useState, useLayoutEffect, useMemo } from 'react'
 import { Markdown } from '@/lib/pretext-md/react'
 import { parse } from '@/lib/pretext-md/core'
 import { measureBlocks } from '@/lib/pretext-md/core/block-layout'
 import { shrinkwrap } from '@/lib/pretext-md/core/shrinkwrap'
 import { defaultConfig } from '@/lib/pretext-md/react/context'
 import { defaultPlugins } from '@/lib/pretext-md/react/plugins'
-import { useVirtualize, useScrollTop } from '@/lib/pretext-md/react/use-virtualize'
+import { useVirtualize, useScrollState } from '@/hooks/use-virtualize'
 import type { MeasuredBlock, BlockNode } from '@/lib/pretext-md/core'
 
 // --- Sample content ---
@@ -417,8 +417,9 @@ function measureMessages(
 function VirtualizedChatDemo() {
   const [messageCount, setMessageCount] = useState(1000)
   const [maxBubble, setMaxBubble] = useState(360)
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const scrollTop = useScrollTop(scrollRef)
+  const scroll = useScrollState()
+  const scrollTop = scroll.scrollTop
+  const scrollRef = scroll.refCallback
   const viewportHeight = 500
   const gap = 8
 
