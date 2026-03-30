@@ -71,8 +71,15 @@ export function useVirtualizedList<T>(
     }
   })
 
+  // Clear measured height cache when width changes — cached heights are stale at new width.
+  const prevWidth = useRef(width)
+  if (prevWidth.current !== width) {
+    heightCache.current.clear()
+    baselineCache.current.clear()
+    prevWidth.current = width
+  }
+
   // Precompute strategy heights once per items/width change.
-  // Avoids re-calling expensive measure() on version bumps.
   const strategyHeights = useMemo(() => {
     const m = new Map<string | number, number>()
     for (const item of items) {
@@ -124,7 +131,18 @@ export function useVirtualizedList<T>(
         heightCache.current.set(id, h)
         changed = true
       }
-      if (changed) scheduleVersionBump()
+      if (changed) {
+        for (const entry of entries) {
+          const id = elementToId.current.get(entry.target)
+          if (id === undefined) continue
+          const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
+          const strategy = strategyHeights.get(id)
+          if (strategy !== undefined && Math.abs(h - strategy) > 1) {
+            console.log(`[ro] id=${id} strategy=${strategy} dom=${Math.round(h)} diff=${Math.round(h - strategy)}`)
+          }
+        }
+        scheduleVersionBump()
+      }
     })
   }
 

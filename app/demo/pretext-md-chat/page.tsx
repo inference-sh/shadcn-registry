@@ -211,9 +211,9 @@ function ChatMessageRenderer({ message, maxWidth }: {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`rounded-2xl px-3 py-2 text-sm ${
-          isUser ? 'bg-primary text-primary-foreground' : 'w-full'
+          isUser ? 'bg-primary text-primary-foreground max-w-full' : 'w-full'
         }`}
-        style={{ maxWidth: isUser ? maxWidth * 0.7 : maxWidth }}
+        style={{ maxWidth: isUser ? maxWidth * 0.7 : undefined }}
       >
         {message.reasoning && (
           <div className="mb-2">
