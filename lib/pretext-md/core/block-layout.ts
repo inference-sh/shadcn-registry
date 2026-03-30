@@ -4,11 +4,6 @@
 // Block types like code-block, image, hr are measured by plugins — the coordinator
 // only handles paragraph, heading, list, blockquote natively.
 
-import {
-  prepareWithSegments,
-  layoutNextLine,
-  type LayoutCursor,
-} from '@chenglou/pretext'
 import { splitLines } from '@/components/infsh/code-block/utils'
 import { layoutInline } from './inline-layout'
 import type {
@@ -43,8 +38,6 @@ export const CODE_BLOCK = {
   border: 2,         // border top + bottom
 } as const
 
-const CODE_LINE_START: LayoutCursor = { segmentIndex: 0, graphemeIndex: 0 }
-const CODE_UNBOUNDED = 100_000
 
 function getHeadingFont(level: HeadingNode['level']): keyof FontConfig {
   return `h${level}` as keyof FontConfig
@@ -179,60 +172,16 @@ function measureBlockquote(block: BlockNode & { kind: 'blockquote' }, config: Me
 function measureCodeBlock(block: CodeBlockNode, config: MeasureConfig): MeasuredBlock {
   const hasHeader = !!block.lang
   const lineHeight = config.lineHeights.code
-  const font = config.fonts.code
-
-  // Code doesn't wrap — one visual line per physical line, horizontal scroll for overflow.
-  const lines = layoutCodeLines(block.code, font, lineHeight)
-  const contentHeight = lines.length * lineHeight
+  const numLines = splitLines(block.code).length
+  const contentHeight = numLines * lineHeight
   const height =
     (hasHeader ? CODE_BLOCK.headerHeight : 0) +
     CODE_BLOCK.paddingY +
     contentHeight +
     CODE_BLOCK.border
 
-  return { node: block, height, y: 0, lines }
-}
-
-/**
- * Layout code text into measured lines.
- * One visual line per physical line — no wrapping.
- * Long lines scroll horizontally via overflow-x on the pre element.
- */
-function layoutCodeLines(
-  code: string,
-  font: string,
-  lineHeight: number,
-): MeasuredLine[] {
-  const lines: MeasuredLine[] = []
-  const physicalLines = splitLines(code)
-
-  let y = 0
-  for (const codeLine of physicalLines) {
-    if (codeLine === '') {
-      lines.push({ fragments: [], width: 0, y })
-      y += lineHeight
-      continue
-    }
-
-    // Measure full line width (no wrapping — unbounded width)
-    const prepared = prepareWithSegments(codeLine, font)
-    const whole = layoutNextLine(prepared, CODE_LINE_START, CODE_UNBOUNDED)
-
-    lines.push({
-      fragments: [{
-        text: whole?.text ?? codeLine,
-        width: whole?.width ?? 0,
-        font,
-        fontStyle: 'body',
-        leadingGap: 0,
-      }],
-      width: whole?.width ?? 0,
-      y,
-    })
-    y += lineHeight
-  }
-
-  return lines
+  // No lines data — code blocks render via CodeBlock component, not pretext fragments
+  return { node: block, height, y: 0 }
 }
 
 function measureList(block: BlockNode & { kind: 'list' }, config: MeasureConfig): MeasuredBlock {

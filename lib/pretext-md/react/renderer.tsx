@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, memo, useState, useRef, useEffect, createContext, useContext } from 'react'
+import React, { useMemo, memo, useState, useRef, useEffect, useLayoutEffect, createContext, useContext } from 'react'
 import { parse } from '../core/parser'
 import { measureBlocks } from '../core/block-layout'
 import type {
@@ -15,7 +15,6 @@ import type {
   CodeBlockNode,
   EmbedPlugin,
 } from '../core/types'
-import { CODE_BLOCK } from '../core/block-layout'
 import { usePretextMdConfig } from './context'
 import {
   defaultPlugins,
@@ -23,10 +22,6 @@ import {
   renderImage,
 } from './plugins'
 import { CodeBlock } from '@/components/infsh/code-block/code-block'
-import { tokenize, type TokenizeContext } from '@/components/infsh/code-block/tokenizer'
-import { tokenStyles } from '@/components/infsh/code-block/styles'
-import { normalizeLanguage } from '@/components/infsh/code-block/languages'
-import { splitLines, copyToClipboard } from '@/components/infsh/code-block/utils'
 
 const DEFAULT_PLUGINS = defaultPlugins()
 
@@ -93,6 +88,17 @@ export const Markdown = memo(function Markdown({
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
+  // Sync read on mount — get width before first paint (no flow-mode flash)
+  useLayoutEffect(() => {
+    if (maxWidthProp !== undefined) return
+    const el = containerRef.current
+    if (el) {
+      const w = Math.floor(el.getBoundingClientRect().width)
+      if (w > 0) setContainerWidth(w)
+    }
+  }, [maxWidthProp])
+
+  // RO for subsequent resize updates
   useEffect(() => {
     if (maxWidthProp !== undefined) return
     const el = containerRef.current
@@ -170,8 +176,14 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
       return <MeasuredInlineBlock block={block} tag="p" />
     case 'heading':
       return <MeasuredInlineBlock block={block} tag={`h${node.level}`} />
-    case 'code-block':
-      return <MeasuredCodeBlock block={block} />
+    case 'code-block': {
+      const codeNode = node as CodeBlockNode
+      return (
+        <CodeBlock language={codeNode.lang} showHeader={!!codeNode.lang} showLineNumbers={false} className="!my-0 !h-auto">
+          {codeNode.code}
+        </CodeBlock>
+      )
+    }
     case 'blockquote':
       return <MeasuredBlockquote block={block} />
     case 'list':
@@ -194,147 +206,6 @@ function MeasuredInlineBlock({ block, tag }: { block: MeasuredBlock; tag: string
   )
 }
 
-function MeasuredCodeBlock({ block }: { block: MeasuredBlock }) {
-  const node = block.node as CodeBlockNode
-  const config = usePretextMdConfig()
-  const hasHeader = !!node.lang
-  const lineHeight = config.lineHeights.code
-  const font = config.fonts.code
-  const [copied, setCopied] = useState(false)
-
-  const physicalLines = useMemo(() => splitLines(node.code), [node.code])
-
-  // Tokenize for syntax highlighting (doesn't affect measurement)
-  const tokenizedLines = useMemo(() => {
-    if (!node.lang) return null
-    const lang = normalizeLanguage(node.lang)
-    const result: ReturnType<typeof tokenize>['tokens'][] = []
-    let context: TokenizeContext = {}
-    for (const line of physicalLines) {
-      const r = tokenize(line, lang, context)
-      result.push(r.tokens)
-      context = r.context
-    }
-    return result
-  }, [physicalLines, node.lang])
-
-  // Map measured lines back to physical lines for token lookup.
-  const lineTokenMap = useMemo(() => {
-    if (!tokenizedLines || !block.lines) return null
-
-    const map: { physicalIdx: number; charOffset: number }[] = []
-    let physicalIdx = 0
-    let charOffset = 0
-
-    for (const line of block.lines) {
-      map.push({ physicalIdx, charOffset })
-      const text = line.fragments.map(f => f.text).join('')
-      charOffset += text.length
-      // If this consumed all chars in the physical line, move to next
-      if (charOffset >= (physicalLines[physicalIdx]?.length ?? 0)) {
-        physicalIdx++
-        charOffset = 0
-      }
-    }
-    return map
-  }, [tokenizedLines, block.lines, node.code])
-
-  const handleCopy = async () => {
-    const ok = await copyToClipboard(node.code)
-    if (ok) {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    }
-  }
-
-  return (
-    <div className="w-full rounded-lg border border-border overflow-hidden bg-muted/20">
-      {hasHeader && (
-        <div
-          style={{ height: CODE_BLOCK.headerHeight }}
-          className="flex items-center justify-between px-2 border-b border-white/5 bg-muted"
-        >
-          <span className="text-xs text-zinc-500 font-mono">{node.lang}</span>
-          <button
-            onClick={handleCopy}
-            className="cursor-pointer flex items-center gap-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
-          >
-            <span>{copied ? 'copied!' : 'copy'}</span>
-          </button>
-        </div>
-      )}
-      <pre style={{ padding: CODE_BLOCK.paddingY / 2 }} className="overflow-auto">
-        <code>
-          {block.lines?.map((line, i) => {
-            const lineText = line.fragments.map(f => f.text).join('')
-            const tokens = getTokensForLine(lineText, i, tokenizedLines, lineTokenMap)
-            return (
-              <span key={i} style={{ display: 'block', height: lineHeight, whiteSpace: 'pre', font }}>
-                {tokens
-                  ? tokens.map((tok, j) =>
-                      tok.type ? (
-                        <span key={j} className={tokenStyles[tok.type]}>{tok.content}</span>
-                      ) : (
-                        <span key={j}>{tok.content}</span>
-                      )
-                    )
-                  : lineText || ' '
-                }
-              </span>
-            )
-          })}
-        </code>
-      </pre>
-    </div>
-  )
-}
-
-/** Get syntax tokens for a measured line, handling wrapped lines. */
-function getTokensForLine(
-  lineText: string,
-  lineIdx: number,
-  tokenizedLines: ReturnType<typeof tokenize>['tokens'][] | null,
-  lineTokenMap: { physicalIdx: number; charOffset: number }[] | null,
-): ReturnType<typeof tokenize>['tokens'] | null {
-  if (!tokenizedLines || !lineTokenMap) return null
-  const mapping = lineTokenMap[lineIdx]
-  if (!mapping) return null
-
-  const tokens = tokenizedLines[mapping.physicalIdx]
-  if (!tokens) return null
-
-  if (mapping.charOffset === 0 && lineText.length >= (getPhysicalLineLength(tokens))) {
-    // Entire physical line on one measured line — return tokens directly
-    return tokens
-  }
-
-  // Wrapped line — slice tokens to match this measured line's char range
-  return sliceTokens(tokens, mapping.charOffset, mapping.charOffset + lineText.length)
-}
-
-function getPhysicalLineLength(tokens: ReturnType<typeof tokenize>['tokens']): number {
-  return tokens.reduce((sum, t) => sum + t.content.length, 0)
-}
-
-function sliceTokens(
-  tokens: ReturnType<typeof tokenize>['tokens'],
-  start: number,
-  end: number,
-): ReturnType<typeof tokenize>['tokens'] {
-  const result: ReturnType<typeof tokenize>['tokens'] = []
-  let pos = 0
-  for (const token of tokens) {
-    const tokEnd = pos + token.content.length
-    if (tokEnd <= start) { pos = tokEnd; continue }
-    if (pos >= end) break
-    const sliceStart = Math.max(0, start - pos)
-    const sliceEnd = Math.min(token.content.length, end - pos)
-    const content = token.content.slice(sliceStart, sliceEnd)
-    if (content) result.push({ ...token, content })
-    pos = tokEnd
-  }
-  return result
-}
 
 function MeasuredLineRenderer({ line, lineHeight }: { line: MeasuredLine; lineHeight: number }) {
   return (

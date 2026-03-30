@@ -26,7 +26,7 @@ function messageStrategy(msg: ChatMessage): MeasureStrategy {
   return {
     kind: 'computed',
     measure: (width) => {
-      const contentWidth = msg.role === 'user' ? width * 0.7 - 24 : width - 24
+      const contentWidth = msg.role === 'user' ? (width - 32) * 0.7 - 24 : width - 32 - 24
       let height = 16 // padding
 
       // Reasoning (collapsed by default: 33px + 8px gap)
@@ -211,9 +211,8 @@ function ChatMessageRenderer({ message, maxWidth }: {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`rounded-2xl px-3 py-2 text-sm ${
-          isUser ? 'bg-primary text-primary-foreground max-w-full' : 'w-full'
+          isUser ? 'bg-primary text-primary-foreground w-[70%]' : 'w-full'
         }`}
-        style={{ maxWidth: isUser ? maxWidth * 0.7 : undefined }}
       >
         {message.reasoning && (
           <div className="mb-2">
@@ -226,7 +225,7 @@ function ChatMessageRenderer({ message, maxWidth }: {
           </div>
         ))}
         {message.content && (
-          <Markdown content={message.content} maxWidth={isUser ? maxWidth * 0.7 - 24 : undefined} />
+          <Markdown content={message.content} />
         )}
       </div>
     </div>

@@ -153,7 +153,7 @@ export const CodeBlock = memo(function CodeBlock({
                   {i + 1}
                 </span>
               )}
-              <span className="whitespace-pre-wrap break-all leading-6">
+              <span className="whitespace-pre leading-6">
                 {tokenizedLines ? (
                   <HighlightedLine tokens={tokenizedLines[i]?.tokens ?? [{ type: null, content: line || ' ' }]} />
                 ) : (
