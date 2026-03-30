@@ -3,7 +3,6 @@ export type {
   FixedStrategy,
   CappedStrategy,
   ComputedStrategy,
-  PretextStrategy,
   VirtualItem,
   PositionedItem,
 } from './types'

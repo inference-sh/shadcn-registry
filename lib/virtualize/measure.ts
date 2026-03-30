@@ -12,7 +12,6 @@ export function resolveHeight(strategy: MeasureStrategy, width: number): number 
         ? Math.min(strategy.estimateContent, strategy.maxHeight)
         : strategy.maxHeight
     case 'computed':
-    case 'pretext':
       return strategy.measure(width)
   }
 }

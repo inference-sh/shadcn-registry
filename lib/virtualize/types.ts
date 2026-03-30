@@ -6,7 +6,6 @@ export type MeasureStrategy =
   | FixedStrategy
   | CappedStrategy
   | ComputedStrategy
-  | PretextStrategy
 
 // Height is always the same regardless of content or width.
 // Examples: buttons, pills, status indicators, headers.
@@ -30,14 +29,6 @@ export type CappedStrategy = {
 // Examples: list of N items × row height, grid of N columns.
 export type ComputedStrategy = {
   kind: 'computed'
-  measure: (width: number) => number
-}
-
-// Height comes from pretext-md text measurement.
-// For uncapped flowing text where line breaks determine height.
-// Examples: chat message body, markdown paragraphs.
-export type PretextStrategy = {
-  kind: 'pretext'
   measure: (width: number) => number
 }
 

@@ -208,28 +208,26 @@ function ChatMessageRenderer({ message, maxWidth }: {
   const isUser = message.role === 'user'
 
   return (
-    <div>
-      <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-        <div
-          className={`rounded-2xl px-3 py-2 text-sm ${
-            isUser ? 'bg-primary text-primary-foreground' : 'w-full'
-          }`}
-          style={{ maxWidth: isUser ? maxWidth * 0.7 : maxWidth }}
-        >
-          {message.reasoning && (
-            <div className="mb-2">
-              <ReasoningBlock reasoning={message.reasoning} />
-            </div>
-          )}
-          {message.toolInvocations?.map((tool, i) => (
-            <div key={i} className="mb-2">
-              <ToolInvocationBlock invocation={tool} />
-            </div>
-          ))}
-          {message.content && (
-            <Markdown content={message.content} maxWidth={isUser ? maxWidth * 0.7 - 24 : undefined} />
-          )}
-        </div>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`rounded-2xl px-3 py-2 text-sm ${
+          isUser ? 'bg-primary text-primary-foreground' : 'w-full'
+        }`}
+        style={{ maxWidth: isUser ? maxWidth * 0.7 : maxWidth }}
+      >
+        {message.reasoning && (
+          <div className="mb-2">
+            <ReasoningBlock reasoning={message.reasoning} />
+          </div>
+        )}
+        {message.toolInvocations?.map((tool, i) => (
+          <div key={i} className="mb-2">
+            <ToolInvocationBlock invocation={tool} />
+          </div>
+        ))}
+        {message.content && (
+          <Markdown content={message.content} maxWidth={isUser ? maxWidth * 0.7 - 24 : undefined} />
+        )}
       </div>
     </div>
   )
@@ -304,17 +302,21 @@ function ToolInvocationBlock({ invocation }: {
 
 function useFps(): number {
   const [fps, setFps] = useState(60)
-  const frames = useRef<number[]>([])
+  const count = useRef(0)
+  const lastUpdate = useRef(performance.now())
 
   useEffect(() => {
     let raf: number
     function tick() {
+      count.current++
       const now = performance.now()
-      frames.current.push(now)
-      while (frames.current.length > 0 && frames.current[0]! < now - 1000) {
-        frames.current.shift()
+      const elapsed = now - lastUpdate.current
+      if (elapsed >= 500) {
+        const newFps = Math.round(count.current * 1000 / elapsed)
+        setFps(prev => prev === newFps ? prev : newFps)
+        count.current = 0
+        lastUpdate.current = now
       }
-      setFps(frames.current.length)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)

@@ -9,6 +9,7 @@ import {
   layoutNextLine,
   type LayoutCursor,
 } from '@chenglou/pretext'
+import { splitLines } from '@/components/infsh/code-block/utils'
 import { layoutInline } from './inline-layout'
 import type {
   BlockNode,
@@ -203,12 +204,7 @@ function layoutCodeLines(
   lineHeight: number,
 ): MeasuredLine[] {
   const lines: MeasuredLine[] = []
-  const physicalLines = code.split('\n')
-
-  // Remove trailing empty line from trailing newline
-  if (physicalLines.length > 0 && physicalLines[physicalLines.length - 1] === '') {
-    physicalLines.pop()
-  }
+  const physicalLines = splitLines(code)
 
   let y = 0
   for (const codeLine of physicalLines) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useCallback, useRef, useState, useLayoutEffect } from 'react'
+import { useMemo, useCallback, useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { flushSync } from 'react-dom'
 import type { VirtualItem, PositionedItem } from './types'
 import { positionItems, resolveHeight } from './measure'
@@ -88,13 +88,12 @@ export function useVirtualizedList<T>(
     [items, width, gap, version, strategyHeights],
   )
 
-  // Y-position lookup for "above viewport?" check
-  const yLookup = useRef(new Map<string | number, number>())
-  useMemo(() => {
-    const m = yLookup.current
-    m.clear()
+  // Y-position lookup for "above viewport?" check (ref for stable callback access)
+  const yLookupRef = useRef(new Map<string | number, number>())
+  yLookupRef.current = useMemo(() => {
+    const m = new Map<string | number, number>()
     for (const p of positioned) m.set(p.id, p.y)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return m
   }, [positioned])
 
   const virtual = useVirtualize(positioned, scroll.scrollTop, viewportHeight)
@@ -103,6 +102,9 @@ export function useVirtualizedList<T>(
 
   const roRef = useRef<ResizeObserver | null>(null)
   const elementToId = useRef(new Map<Element, string | number>())
+
+  // Disconnect RO on unmount to prevent leaks
+  useEffect(() => () => { roRef.current?.disconnect() }, [])
 
   if (!roRef.current && typeof ResizeObserver !== 'undefined') {
     roRef.current = new ResizeObserver((entries) => {
@@ -168,7 +170,7 @@ export function useVirtualizedList<T>(
           // Scroll correction only if item was above viewport
           const scrollEl = getScrollEl()
           if (scrollEl) {
-            const itemY = yLookup.current.get(id) ?? 0
+            const itemY = yLookupRef.current.get(id) ?? 0
             if (itemY + cached <= scrollEl.scrollTop) {
               pendingCorrection.current += base - cached
             }

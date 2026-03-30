@@ -26,6 +26,7 @@ import { CodeBlock } from '@/components/infsh/code-block/code-block'
 import { tokenize, type TokenizeContext } from '@/components/infsh/code-block/tokenizer'
 import { tokenStyles } from '@/components/infsh/code-block/styles'
 import { normalizeLanguage } from '@/components/infsh/code-block/languages'
+import { splitLines, copyToClipboard } from '@/components/infsh/code-block/utils'
 
 const DEFAULT_PLUGINS = defaultPlugins()
 
@@ -93,6 +94,7 @@ export const Markdown = memo(function Markdown({
   const [containerWidth, setContainerWidth] = useState(0)
 
   useEffect(() => {
+    if (maxWidthProp !== undefined) return
     const el = containerRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(([entry]) => {
@@ -103,7 +105,7 @@ export const Markdown = memo(function Markdown({
     })
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [maxWidthProp])
 
   const maxWidth = maxWidthProp ?? containerWidth
 
@@ -200,14 +202,12 @@ function MeasuredCodeBlock({ block }: { block: MeasuredBlock }) {
   const font = config.fonts.code
   const [copied, setCopied] = useState(false)
 
+  const physicalLines = useMemo(() => splitLines(node.code), [node.code])
+
   // Tokenize for syntax highlighting (doesn't affect measurement)
   const tokenizedLines = useMemo(() => {
     if (!node.lang) return null
     const lang = normalizeLanguage(node.lang)
-    const physicalLines = node.code.split('\n')
-    if (physicalLines.length > 0 && physicalLines[physicalLines.length - 1] === '') {
-      physicalLines.pop()
-    }
     const result: ReturnType<typeof tokenize>['tokens'][] = []
     let context: TokenizeContext = {}
     for (const line of physicalLines) {
@@ -216,17 +216,11 @@ function MeasuredCodeBlock({ block }: { block: MeasuredBlock }) {
       context = r.context
     }
     return result
-  }, [node.code, node.lang])
+  }, [physicalLines, node.lang])
 
   // Map measured lines back to physical lines for token lookup.
-  // Multiple measured lines can come from one physical line (wrapping).
-  // Track which physical line each measured line belongs to and the char offset.
   const lineTokenMap = useMemo(() => {
     if (!tokenizedLines || !block.lines) return null
-    const physicalLines = node.code.split('\n')
-    if (physicalLines.length > 0 && physicalLines[physicalLines.length - 1] === '') {
-      physicalLines.pop()
-    }
 
     const map: { physicalIdx: number; charOffset: number }[] = []
     let physicalIdx = 0
@@ -246,11 +240,11 @@ function MeasuredCodeBlock({ block }: { block: MeasuredBlock }) {
   }, [tokenizedLines, block.lines, node.code])
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(node.code)
+    const ok = await copyToClipboard(node.code)
+    if (ok) {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    } catch {}
+    }
   }
 
   return (
