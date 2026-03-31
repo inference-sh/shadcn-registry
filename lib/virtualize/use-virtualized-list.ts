@@ -34,15 +34,13 @@ export function useVirtualizedList<T>(
   // Why baseline exists: when a user expands a collapsible (e.g. reasoning block),
   // scrolls away (item unmounts), then scrolls back (item remounts collapsed),
   // the spacer must reflect the collapsed height — not the expanded height.
-  // On unmount, we reset heightCache to baseline and correct scrollTop by the delta.
-  // Without this, the spacer would keep the expanded height, causing a jump on remount.
+  // On unmount, we reset heightCache to baseline so spacers match remount state.
   //
-  // Why scheduleFlush (flushSync) exists: the spacer update and scrollTop correction
-  // must happen in the same paint frame. If they're split across frames, the user sees
-  // a 1-frame flicker (spacer shrinks, then scrollTop corrects). flushSync forces
-  // React to re-render synchronously inside a microtask, so useLayoutEffect can apply
-  // the scrollTop correction before the browser paints. This only fires on the rare
-  // expand→scroll-away path — normal scrolling uses the cheap rAF path.
+  // Why scheduleFlush exists: on unmount of an expanded item above the viewport,
+  // we need to update spacers AND correct scrollTop atomically. scheduleFlush
+  // queues a microtask (runs before paint) that flushSync's a re-render to update
+  // spacers, then useLayoutEffect applies the scrollTop correction — all before
+  // the browser paints. This only fires on the rare expand→scroll-away path.
   const heightCache = useRef(new Map<string | number, number>())
   const baselineCache = useRef(new Map<string | number, number>())
 
@@ -59,28 +57,32 @@ export function useVirtualizedList<T>(
     })
   }
 
-  // Expand→unmount path: microtask + flushSync for atomic spacer + scroll correction
-  const flushScheduled = useRef(false)
+  // Expand→unmount path: microtask + flushSync for atomic spacer + scroll correction.
+  // useLayoutEffect skips while flushPending=true (spacers stale), applies after
+  // the flushSync re-render clears the flag (spacers correct).
+  const pendingCorrection = useRef(0)
+  const flushPending = useRef(false)
+
   function scheduleFlush() {
-    if (flushScheduled.current) return
-    flushScheduled.current = true
+    if (flushPending.current) return
+    flushPending.current = true
     queueMicrotask(() => {
-      flushScheduled.current = false
-      flushSync(() => setVersion(v => v + 1))
+      flushSync(() => {
+        flushPending.current = false
+        setVersion(v => v + 1)
+      })
     })
   }
 
-  const pendingCorrection = useRef(0)
-
   useLayoutEffect(() => {
-    if (pendingCorrection.current !== 0) {
+    if (pendingCorrection.current !== 0 && !flushPending.current) {
       const el = getScrollEl()
       if (el) el.scrollTop += pendingCorrection.current
       pendingCorrection.current = 0
     }
   })
 
-  // Clear measured height cache when width changes — cached heights are stale at new width.
+  // Clear caches when width changes — heights are stale at new width.
   const prevWidth = useRef(width)
   if (prevWidth.current !== width) {
     heightCache.current.clear()
@@ -119,8 +121,11 @@ export function useVirtualizedList<T>(
   const roRef = useRef<ResizeObserver | null>(null)
   const elementToId = useRef(new Map<Element, string | number>())
 
-  // Disconnect RO on unmount to prevent leaks
   useEffect(() => () => { roRef.current?.disconnect() }, [])
+
+  if (process.env.NODE_ENV === 'development' && !roRef.current) {
+    console.log('[virtualize] dev mode active')
+  }
 
   if (!roRef.current && typeof ResizeObserver !== 'undefined') {
     roRef.current = new ResizeObserver((entries) => {
@@ -130,7 +135,6 @@ export function useVirtualizedList<T>(
         if (id === undefined) continue
         const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
 
-        // Set baseline on first measurement (collapsed height)
         if (!baselineCache.current.has(id)) {
           baselineCache.current.set(id, h)
         }
@@ -141,13 +145,15 @@ export function useVirtualizedList<T>(
         changed = true
       }
       if (changed) {
-        for (const entry of entries) {
-          const id = elementToId.current.get(entry.target)
-          if (id === undefined) continue
-          const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
-          const strategy = strategyHeights.get(id)
-          if (strategy !== undefined && Math.abs(h - strategy) > 1) {
-            console.log(`[ro] id=${id} strategy=${strategy} dom=${Math.round(h)} diff=${Math.round(h - strategy)}`)
+        if (process.env.NODE_ENV === 'development') {
+          for (const entry of entries) {
+            const id = elementToId.current.get(entry.target)
+            if (id === undefined) continue
+            const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height
+            const strategy = strategyHeights.get(id)
+            if (strategy !== undefined && Math.abs(h - strategy) > 2) {
+              console.warn(`[virtualize] height drift: id=${id} strategy=${Math.round(strategy)} actual=${Math.round(h)} diff=${Math.round(h - strategy)}px`)
+            }
           }
         }
         scheduleVersionBump()
@@ -175,7 +181,6 @@ export function useVirtualizedList<T>(
         }
         itemElements.current.set(id, el)
         elementToId.current.set(el, id)
-        // Reset baseline for fresh collapsed measurement
         baselineCache.current.delete(id)
         ro?.observe(el)
       } else {
@@ -191,7 +196,6 @@ export function useVirtualizedList<T>(
         const cached = heightCache.current.get(id)
         const base = baselineCache.current.get(id)
         if (cached !== undefined && base !== undefined && Math.abs(cached - base) > 1) {
-          // Reset cache to baseline (what remount will render)
           heightCache.current.set(id, base)
 
           // Scroll correction only if item was above viewport
@@ -203,7 +207,6 @@ export function useVirtualizedList<T>(
             }
           }
 
-          // Atomic: spacer update + scroll correction in same paint frame
           scheduleFlush()
         }
       }

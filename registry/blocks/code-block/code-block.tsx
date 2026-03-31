@@ -139,7 +139,7 @@ export const CodeBlock = memo(function CodeBlock({
 
       {/* Code content */}
       <pre className="flex-1 min-h-0 overflow-auto p-4">
-        <code className={cn('grid font-mono', textSize || 'text-sm')}>
+        <code className={cn('grid font-mono', textSize || 'text-xs')}>
           {lines.map((line, i) => (
             <span
               key={i}
