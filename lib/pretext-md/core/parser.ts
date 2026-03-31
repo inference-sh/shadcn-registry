@@ -27,6 +27,10 @@ import type {
   Delete,
   Break,
   Image,
+  Table,
+  TableRow,
+  TableCell,
+  AlignType,
 } from 'mdast'
 
 const parser = unified().use(remarkParse).use(remarkGfm)
@@ -59,6 +63,8 @@ function walkBlock(node: Content): BlockNode | null {
       return walkList(node as List)
     case 'thematicBreak':
       return { kind: 'hr' } as const
+    case 'table':
+      return walkTable(node as Table)
     default:
       return null
   }
@@ -107,6 +113,18 @@ function walkList(node: List): BlockNode {
     start: node.start ?? undefined,
     items: node.children.map((item: ListItem) => walkBlocks(item.children)),
   }
+}
+
+function walkTable(node: Table): BlockNode {
+  const align = (node.align ?? []).map((a: AlignType | null | undefined) =>
+    a === 'left' || a === 'center' || a === 'right' ? a : null,
+  )
+  const rows = node.children.map((row: TableRow) =>
+    row.children.map((cell: TableCell) =>
+      walkInlines(cell.children as PhrasingContent[], 'body'),
+    ),
+  )
+  return { kind: 'table', align, rows }
 }
 
 // --- Inline walking ---

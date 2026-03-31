@@ -9,4 +9,5 @@ export {
   youtubePlugin,
   imagePlugin,
   hrPlugin,
+  tablePlugin,
 } from './plugins'

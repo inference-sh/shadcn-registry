@@ -20,6 +20,43 @@ import { ChevronRight } from 'lucide-react';
 
 const COLLAPSE_THRESHOLD = 3;
 
+// Single tool row height: CollapsibleSection trigger (same as reasoning)
+const TOOL_ROW_HEIGHT = 20
+// Collapse toggle button: text-xs + icon + gap
+const COLLAPSE_BUTTON_HEIGHT = 20
+// space-y-1 gap between tool rows
+const TOOL_GAP = 4
+// mt-2 before the tool section
+const TOOL_SECTION_GAP = 8
+// Finish block: my-6 (48px) + divider row (~24px) + result card (~48px)
+const FINISH_BLOCK_HEIGHT = 120
+
+/**
+ * Returns the predicted height of a tool invocations section.
+ * Components own their measurement — strategy just calls this.
+ */
+export function measureToolInvocations(invocations: ToolInvocationDTO[] | undefined): number {
+  if (!invocations?.length) return 0
+
+  // Check for finish tool — different layout
+  const hasFinish = invocations.some(inv => inv.function?.name === 'finish')
+  if (hasFinish) return TOOL_SECTION_GAP + FINISH_BLOCK_HEIGHT
+
+  const count = invocations.length
+  if (count < COLLAPSE_THRESHOLD) {
+    // All expanded as rows
+    return TOOL_SECTION_GAP + count * TOOL_ROW_HEIGHT + (count - 1) * TOOL_GAP
+  }
+
+  // Prominent (needs attention) shown + collapse button + collapsed summary
+  let prominent = 0
+  for (const inv of invocations) {
+    if (needsAttention(inv)) prominent++
+  }
+  const visibleRows = prominent
+  return TOOL_SECTION_GAP + visibleRows * TOOL_ROW_HEIGHT + (visibleRows > 0 ? visibleRows * TOOL_GAP : 0) + COLLAPSE_BUTTON_HEIGHT
+}
+
 function needsAttention(inv: ToolInvocationDTO): boolean {
   return inv.status === ToolInvocationStatusAwaitingInput ||
     inv.status === ToolInvocationStatusAwaitingApproval ||

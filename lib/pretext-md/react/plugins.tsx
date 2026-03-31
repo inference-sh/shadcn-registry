@@ -7,6 +7,7 @@ import type {
   ListNode,
   CodeBlockNode,
   ImageNode,
+  TableNode,
   EmbedPlugin,
   PluginContext,
 } from '../core/types'
@@ -132,8 +133,93 @@ export function listPlugin(indent: number = 24): EmbedPlugin {
   }
 }
 
+// --- Table plugin ---
+
+const TABLE_ROW_HEIGHT = 33 // px-3 py-1.5 (12px) + text-sm line (~16px) + border (1px) + padding
+const TABLE_HEADER_HEIGHT = 33
+
+export function tablePlugin(): EmbedPlugin {
+  return {
+    name: 'table',
+    match: (node) => node.kind === 'table',
+    measure: (node) => {
+      const table = node as TableNode
+      const height = TABLE_HEADER_HEIGHT + (table.rows.length - 1) * TABLE_ROW_HEIGHT + 2 // 2 = border
+      return { kind: 'computed', height }
+    },
+  }
+}
+
+export function renderTable(node: TableNode): React.ReactNode {
+  if (node.rows.length === 0) return null
+  const [headerRow, ...bodyRows] = node.rows
+  const align = node.align
+
+  return (
+    <div className="min-w-0 overflow-x-auto border border-border rounded-md">
+      <table className="w-full">
+        {headerRow && (
+          <thead className="border-b border-border">
+            <tr>
+              {headerRow.map((cell, i) => (
+                <th
+                  key={i}
+                  className="px-3 py-1.5 text-left text-xs text-muted-foreground"
+                  style={align[i] ? { textAlign: align[i]! } : undefined}
+                >
+                  <FlowCellInlines items={cell} />
+                </th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {bodyRows.map((row, ri) => (
+            <tr key={ri} className="border-b border-border last:border-0">
+              {row.map((cell, ci) => (
+                <td
+                  key={ci}
+                  className="px-3 py-1.5 text-sm"
+                  style={align[ci] ? { textAlign: align[ci]! } : undefined}
+                >
+                  <FlowCellInlines items={cell} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/** Render inline items inside a table cell — reuses the same inline rendering as flow mode. */
+function FlowCellInlines({ items }: { items: import('../core/types').InlineItem[] }) {
+  return (
+    <>
+      {items.map((item, i) => {
+        switch (item.kind) {
+          case 'text': {
+            const Tag = item.font === 'bold' || item.font === 'boldItalic' ? 'strong' : item.font === 'italic' ? 'em' : item.font === 'strikethrough' ? 'del' : 'span'
+            if (item.font === 'boldItalic') return <strong key={i}><em>{item.text}</em></strong>
+            return <Tag key={i}>{item.text}</Tag>
+          }
+          case 'code':
+            return <code key={i} className="bg-foreground/[0.06] rounded px-1 py-0.5 text-[0.9em]">{item.text}</code>
+          case 'link':
+            return <a key={i} href={item.href} className="underline text-primary"><FlowCellInlines items={item.items} /></a>
+          case 'break':
+            return <br key={i} />
+          default:
+            return null
+        }
+      })}
+    </>
+  )
+}
+
 // --- Default plugin set ---
 
 export function defaultPlugins(): EmbedPlugin[] {
-  return [codeBlockPlugin(), blockquotePlugin(), listPlugin(), youtubePlugin(), imagePlugin(), hrPlugin()]
+  return [codeBlockPlugin(), blockquotePlugin(), listPlugin(), youtubePlugin(), imagePlugin(), hrPlugin(), tablePlugin()]
 }

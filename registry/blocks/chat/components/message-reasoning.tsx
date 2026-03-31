@@ -10,6 +10,22 @@ import { Spinner } from '@/components/ui/spinner';
 import { CollapsibleSection } from '@/components/ui/collapsible-section';
 import { MarkdownRenderer } from '@/registry/blocks/markdown/markdown-renderer';
 
+// Collapsed trigger: py-0.5 (4px) + flex row with text-xs (~16px line) + icon (12px)
+// CollapsibleSection wrapper adds no extra height when closed
+const TRIGGER_HEIGHT = 20
+
+/**
+ * Returns the predicted height of a reasoning block.
+ * Components own their measurement — strategy just calls this.
+ */
+export function measureReasoning(reasoning: string | undefined, isOpen: boolean): number {
+  if (!reasoning?.trim()) return 0
+  if (!isOpen) return TRIGGER_HEIGHT
+  // Expanded: trigger + mt-1 (4px) + border (2px) + px-2 py-1.5 (12px) + content
+  // Content is capped at max-h-[200px], so worst case = 200
+  return TRIGGER_HEIGHT + 4 + 2 + 12 + 200
+}
+
 interface MessageReasoningProps {
   reasoning: string;
   isReasoning?: boolean;

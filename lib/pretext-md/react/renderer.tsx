@@ -6,6 +6,7 @@ import { measureBlocks } from '../core/block-layout'
 import type {
   BlockNode,
   ListNode,
+  TableNode,
   InlineItem,
   MeasuredBlock,
   MeasuredLine,
@@ -22,6 +23,7 @@ import {
   renderCodeBlock,
   renderYouTube,
   renderImage,
+  renderTable,
 } from './plugins'
 import { CodeBlock } from '@/components/infsh/code-block/code-block'
 
@@ -57,6 +59,7 @@ const defaultRenderers: Record<string, PluginRenderer> = {
   },
   'youtube': (b) => renderYouTube(b.node as ImageNode),
   'image': (b) => renderImage(b.node as ImageNode),
+  'table': (b) => renderTable(b.node as TableNode),
   'hr': () => <hr className="border-border" />,
 }
 

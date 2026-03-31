@@ -7,6 +7,7 @@
 export { ChatContainer } from './components/chat-container';
 export { ChatInput } from './components/chat-input';
 export { ChatMessages } from './components/chat-messages';
+export { VirtualizedChatMessages } from './components/virtualized-chat-messages';
 export { Message } from './components/message';
 export { MessageBubble } from './components/message-bubble';
 export { MessageContent } from './components/message-content';

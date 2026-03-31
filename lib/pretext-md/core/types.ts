@@ -45,6 +45,7 @@ export type BlockNode =
   | ListNode
   | ThematicBreakNode
   | ImageNode
+  | TableNode
 
 export type ParagraphNode = {
   kind: 'paragraph'
@@ -84,6 +85,14 @@ export type ImageNode = {
   kind: 'image'
   src: string
   alt?: string
+}
+
+export type TableAlignType = 'left' | 'center' | 'right' | null
+
+export type TableNode = {
+  kind: 'table'
+  align: TableAlignType[]
+  rows: InlineItem[][][] // rows → cells → inline items
 }
 
 // --- Inline items (within paragraphs/headings) ---

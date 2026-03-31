@@ -17,6 +17,29 @@ import { useShrinkwrap } from '@/hooks/use-shrinkwrap';
 
 const BUBBLE_MAX_RATIO = 0.7
 const BUBBLE_PADDING_X = 12 // p-3
+const BUBBLE_PADDING_Y = 12 // p-3 (user only, assistant has no padding)
+
+/**
+ * Returns the bubble chrome dimensions for measurement.
+ * Components own their measurement — strategy just calls this.
+ */
+export function measureBubbleChrome(role: string, containerWidth: number): {
+  innerWidth: number
+  paddingY: number
+} {
+  const isUser = role === ChatMessageRoleUser
+  if (isUser) {
+    const maxBubble = Math.floor(containerWidth * BUBBLE_MAX_RATIO)
+    return {
+      innerWidth: maxBubble - BUBBLE_PADDING_X * 2,
+      paddingY: BUBBLE_PADDING_Y * 2,
+    }
+  }
+  return {
+    innerWidth: containerWidth,
+    paddingY: 0,
+  }
+}
 
 function getUserText(message: ChatMessageDTO): string | undefined {
   if (message.role !== ChatMessageRoleUser) return undefined
