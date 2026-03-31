@@ -19,7 +19,6 @@ import {
   ChatMessageContentTypeReasoning,
   ChatMessageContentTypeText,
   type ChatMessageDTO,
-  ChatMessageContent,
 } from '@inferencesh/sdk';
 import {
   AgentChatProvider,
@@ -29,7 +28,7 @@ import {
   type AgentOptions,
 } from '@inferencesh/sdk/agent';
 import { ChatContainer } from '@/components/infsh/agent/chat-container';
-import { ChatMessages } from '@/components/infsh/agent/chat-messages';
+import { VirtualizedChatMessages } from '@/registry/blocks/chat/components/virtualized-chat-messages';
 import { ChatInput } from '@/components/infsh/agent/chat-input';
 import { MessageBubble } from '@/components/infsh/agent/message-bubble';
 import { MessageContent } from '@/components/infsh/agent/message-content';
@@ -169,42 +168,17 @@ const MessageRow = memo(function MessageRow({
           isReasoning={isGenerating && !hasTextContent(message)}
         />
       )}
-      <MessageContent message={message} truncate={isUser} />
+      {(isUser || hasTextContent(message)) && <MessageContent message={message} truncate={isUser} />}
       {isAssistant && <ToolInvocations message={message} />}
       {isAssistant && isGenerating && <MessageStatusIndicator />}
     </MessageBubble>
   );
 });
 
-const MessageList = memo(function MessageList({
-  messages,
-  isGenerating,
-}: {
-  messages: ChatMessageDTO[];
-  isGenerating: boolean;
-}) {
-  // Show typing indicator when generating and last message is user or has no content yet
-  const lastMessage = messages[messages.length - 1];
-  const hasTextorReasoning = lastMessage?.content?.some((c: ChatMessageContent) => c.type === ChatMessageContentTypeText || c.type === ChatMessageContentTypeReasoning && c.text?.trim());
-  const showTyping =
-    isGenerating &&
-    (!lastMessage ||
-      lastMessage.role === 'user' ||
-      !hasTextorReasoning);
-
-  return (
-    <div className="space-y-4 p-4">
-      {messages.map((message, index) => (
-        <MessageRow
-          key={message.id}
-          message={message}
-          isLast={index === messages.length - 1}
-        />
-      ))}
-      {showTyping && <MessageStatusIndicator label="thinking..." />}
-    </div>
-  );
-});
+/** Render a single message — passed to VirtualizedChatMessages. */
+function renderMessage(message: ChatMessageDTO) {
+  return <MessageRow message={message} isLast={false} />
+}
 
 const AgentContent = memo(function AgentContent({
   className,
@@ -222,16 +196,26 @@ const AgentContent = memo(function AgentContent({
   examplePrompts?: string[];
 }) {
   const { chat, messages } = useAgentChat();
-  const isGenerating = chat?.status === 'busy';
   const hasMessages = messages.length > 0;
+
+  // Show typing indicator when generating and no content yet
+  const isGenerating = chat?.status === 'busy';
+  const lastMessage = messages[messages.length - 1];
+  const lastHasContent = lastMessage?.content?.some(
+    (c) => c.type === ChatMessageContentTypeText && c.text?.trim() ||
+           c.type === ChatMessageContentTypeReasoning && c.text?.trim()
+  );
+  const showTyping = isGenerating && (!lastMessage || lastMessage.role === 'user' || !lastHasContent);
 
   return (
     <ChatContainer className={cn('h-full p-2', className)}>
       {!compact && <DefaultHeader />}
       {hasMessages ? (
-        <ChatMessages className="flex-1">
-          {({ messages }) => <MessageList messages={messages} isGenerating={isGenerating} />}
-        </ChatMessages>
+        <VirtualizedChatMessages
+          className="flex-1"
+          renderMessage={renderMessage}
+          typingIndicator={showTyping ? <MessageStatusIndicator label="thinking..." /> : undefined}
+        />
       ) : (
         <EmptyState description={description} examplePrompts={examplePrompts} />
       )}

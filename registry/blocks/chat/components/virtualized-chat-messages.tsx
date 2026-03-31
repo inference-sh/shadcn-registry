@@ -15,24 +15,40 @@ import { Button } from '@/components/ui/button'
 import { ArrowDown } from 'lucide-react'
 import { useAgentChat } from '@inferencesh/sdk/agent'
 import type { ChatMessageDTO } from '@inferencesh/sdk'
+import {
+  ChatMessageContentTypeText,
+  ChatMessageContentTypeReasoning,
+} from '@inferencesh/sdk'
 import { useVirtualizedList, type VirtualItem } from '@/lib/virtualize'
 import { messageStrategy } from '../lib/message-strategy'
 
+/** Skip tool-role messages and empty messages (no text, no reasoning, no tools). */
+function isRenderable(msg: ChatMessageDTO): boolean {
+  if (msg.role === 'tool') return false
+  const hasText = msg.content?.some(c => c.type === ChatMessageContentTypeText && c.text?.trim())
+  const hasReasoning = msg.content?.some(c => c.type === ChatMessageContentTypeReasoning && c.text?.trim())
+  const hasTools = msg.tool_invocations && msg.tool_invocations.length > 0
+  return !!(hasText || hasReasoning || hasTools)
+}
+
 const ACTIVATION_THRESHOLD = 50
 const MIN_SCROLL_UP_THRESHOLD = 10
-const LIST_GAP = 16 // gap-4 between messages
+const LIST_GAP = 8 // gap-2 between messages
 const LIST_PADDING_X = 16 // px-4
 
 interface VirtualizedChatMessagesProps {
   renderMessage: (message: ChatMessageDTO) => ReactNode
   className?: string
   scrollToTopPadding?: boolean
+  /** Shown after messages when generating with no content yet */
+  typingIndicator?: ReactNode
 }
 
 export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
   renderMessage,
   className,
   scrollToTopPadding = false,
+  typingIndicator,
 }: VirtualizedChatMessagesProps) {
   const { messages } = useAgentChat()
 
@@ -47,11 +63,10 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
   shouldAutoScrollRef.current = shouldAutoScroll
   const previousScrollTop = useRef<number | null>(null)
 
-  // --- Convert messages to virtual items ---
+  // --- Convert renderable messages to virtual items ---
   const virtualItems: VirtualItem<ChatMessageDTO>[] = useMemo(() => {
     if (chatWidth <= 0) return []
-    const innerWidth = chatWidth - LIST_PADDING_X * 2
-    return messages.map(msg => ({
+    return messages.filter(isRenderable).map(msg => ({
       id: msg.id,
       strategy: messageStrategy(msg),
       data: msg,
@@ -84,6 +99,10 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
   }, [])
 
   // --- Auto-scroll: scroll handler ---
+  // Only disable auto-scroll on deliberate user scroll-up.
+  // Re-enable when user scrolls back to bottom.
+  // Never disable from programmatic scrolls or spacer updates
+  // (those look like "not at bottom" momentarily but aren't user-initiated).
   const handleScroll = useCallback(() => {
     const el = containerElRef.current
     if (!el) return
@@ -94,6 +113,8 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
     if (scrollTop < 0 || scrollTop + clientHeight > scrollHeight + 1) return
 
     const distanceFromBottom = Math.abs(scrollHeight - scrollTop - clientHeight)
+    const isAtBottom = distanceFromBottom < ACTIVATION_THRESHOLD
+
     const isScrollingUp = previousScrollTop.current !== null
       ? scrollTop < previousScrollTop.current
       : false
@@ -101,13 +122,15 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
       ? previousScrollTop.current - scrollTop
       : 0
     const isDeliberateScrollUp = isScrollingUp && scrollUpDistance > MIN_SCROLL_UP_THRESHOLD
-    const isAtBottom = distanceFromBottom < ACTIVATION_THRESHOLD
 
     if (isDeliberateScrollUp && !isAtBottom) {
+      // User deliberately scrolled up — detach
       setShouldAutoScroll(false)
-    } else if (!isScrollingUp || isAtBottom) {
-      setShouldAutoScroll(isAtBottom)
+    } else if (isAtBottom) {
+      // User scrolled back to bottom — re-attach
+      setShouldAutoScroll(true)
     }
+    // Otherwise: spacer update, programmatic scroll, etc. — don't change state.
 
     previousScrollTop.current = scrollTop
   }, [])
@@ -161,7 +184,7 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
           <div style={{ height: list.topSpacer }} />
 
           {/* Visible messages */}
-          <div className="flex flex-col gap-4 px-4">
+          <div className="flex flex-col gap-2 px-4 py-3">
             {list.items.map(item => (
               <div key={item.id} ref={list.getItemRef(item.id)}>
                 {renderMessage(item.data)}
@@ -171,6 +194,11 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
 
           {/* Bottom spacer (virtualizer) */}
           <div style={{ height: list.bottomSpacer }} />
+
+          {/* Typing indicator — shown outside virtualizer, after all messages */}
+          {typingIndicator && (
+            <div className="px-4 py-2">{typingIndicator}</div>
+          )}
 
           {/* Scroll-to-top padding */}
           {scrollToTopPadding && messages.length > 0 && (

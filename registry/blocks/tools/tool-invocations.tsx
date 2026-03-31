@@ -82,7 +82,7 @@ export const ToolInvocations = memo(function ToolInvocations({
 
   if (invocations.length < COLLAPSE_THRESHOLD) {
     return (
-      <div className={cn('mt-2 space-y-1', className)}>
+      <div className={cn('space-y-1', className)}>
         {invocations.map((inv, idx) => (
           <ToolInvocation key={inv.id || idx} invocation={inv} />
         ))}
