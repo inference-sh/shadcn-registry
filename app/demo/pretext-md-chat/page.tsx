@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useLayoutEffect, useEffect, useMemo, useRef, useCallback } from 'react'
-import { useVirtualizedList, type VirtualItem } from '@/lib/virtualize'
+import { useVirtualizedList, type VirtualItem, type MeasureStrategy } from '@/lib/virtualize'
 import { parse } from '@/lib/pretext-md/core/parser'
 import { measureBlocks } from '@/lib/pretext-md/core/block-layout'
 import { defaultConfig } from '@/lib/pretext-md/react/context'
@@ -287,30 +287,33 @@ export default function PretextMdChatDemo() {
 
   const innerWidth = chatWidth > 32 ? chatWidth - 32 : 0
 
-  // Base items: pre-resolve to fixed heights (no re-measure on streaming ticks)
-  const baseVirtualItems: VirtualItem<ChatMessageDTO>[] = useMemo(() => {
-    if (innerWidth <= 0) return []
-    return baseMessages.map(msg => {
-      const strategy = messageStrategy(msg)
-      const height = strategy.kind === 'computed' ? strategy.measure(innerWidth) : 0
-      return { id: msg.id, strategy: { kind: 'fixed' as const, height }, data: msg }
-    })
-  }, [baseMessages, innerWidth])
-
-  // Streaming item: live computed strategy (re-measured each frame)
+  // Strategies are cached per message — memoize so static messages keep stable references.
+  // The virtualizer's strategyCache skips recomputation when the strategy ref hasn't changed.
+  const strategyMap = useRef(new Map<string, MeasureStrategy>())
   const virtualItems: VirtualItem<ChatMessageDTO>[] = useMemo(() => {
-    if (!streamingMsg) return baseVirtualItems
-    return [...baseVirtualItems, {
-      id: streamingMsg.id,
-      strategy: messageStrategy(streamingMsg),
-      data: streamingMsg,
-    }]
-  }, [baseVirtualItems, streamingMsg])
+    if (innerWidth <= 0) return []
+    const streamId = streamingMsg?.id
+    return messages.map(msg => {
+      // Streaming message: new strategy each frame (content changed)
+      // Static messages: reuse cached strategy object (same reference = cache hit in virtualizer)
+      let strategy: MeasureStrategy
+      if (msg.id === streamId) {
+        strategy = messageStrategy(msg)
+        strategyMap.current.set(msg.id, strategy)
+      } else {
+        strategy = strategyMap.current.get(msg.id) ?? messageStrategy(msg)
+        strategyMap.current.set(msg.id, strategy)
+      }
+      return { id: msg.id, strategy, data: msg }
+    })
+  }, [messages, innerWidth, streamingMsg])
   const list = useVirtualizedList(virtualItems, viewportHeight, innerWidth, 16)
   const { getItemRef } = list
   const fps = useFps()
   const [benchResult, setBenchResult] = useState<string | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
+  const [useRO, setUseRO] = useState(true)
+  const [maxWidth, setMaxWidth] = useState(100) // percentage of parent
 
   const startStreaming = useCallback(() => {
     // Stop any previous stream
@@ -433,7 +436,19 @@ export default function PretextMdChatDemo() {
               step={10}
               value={messageCount}
               onChange={(e) => setMessageCount(Number(e.target.value))}
-              className="flex-1 max-w-xs"
+              className="flex-1 max-w-[120px]"
+            />
+            <label className="text-sm font-medium whitespace-nowrap">
+              Width: {maxWidth}%
+            </label>
+            <input
+              type="range"
+              min={30}
+              max={100}
+              step={5}
+              value={maxWidth}
+              onChange={(e) => setMaxWidth(Number(e.target.value))}
+              className="flex-1 max-w-[120px]"
             />
             <div className="flex gap-3 text-xs flex-wrap">
               <span className="bg-muted rounded px-2 py-1">{list.totalCount} total</span>
@@ -454,6 +469,12 @@ export default function PretextMdChatDemo() {
             <button onClick={runBench} className="text-xs bg-muted hover:bg-muted/80 rounded px-3 py-1.5 transition-colors">
               run benchmark
             </button>
+            <button
+              onClick={() => setUseRO(v => !v)}
+              className={`text-xs rounded px-3 py-1.5 transition-colors ${useRO ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}
+            >
+              RO: {useRO ? 'on' : 'off'}
+            </button>
             {benchResult && <span className="text-xs text-muted-foreground font-mono">{benchResult}</span>}
           </div>
 
@@ -464,8 +485,8 @@ export default function PretextMdChatDemo() {
                 containerRef(el)
                 list.scrollRef(el)
               }}
-              className="border border-border rounded-xl bg-muted/20 overflow-y-auto"
-              style={{ height: 600 }}
+              className="border border-border rounded-xl bg-muted/20 overflow-y-auto transition-[width] duration-150"
+              style={{ height: 600, width: `${maxWidth}%` }}
             >
               {/* Top spacer */}
               <div style={{ height: list.topSpacer }} />
@@ -473,7 +494,7 @@ export default function PretextMdChatDemo() {
               {/* Visible messages */}
               <div className="flex flex-col gap-4 px-4">
                 {list.items.map(item => (
-                  <div key={item.id} ref={getItemRef(item.id)}>
+                  <div key={item.id} ref={useRO ? getItemRef(item.id) : undefined}>
                     <DemoMessage message={item.data} />
                   </div>
                 ))}

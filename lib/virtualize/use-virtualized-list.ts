@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback, useRef, useState, useEffect, useLayoutEffect } from 'react'
 import { flushSync } from 'react-dom'
-import type { VirtualItem, PositionedItem } from './types'
+import type { VirtualItem, PositionedItem, MeasureStrategy } from './types'
 import { positionItems, resolveHeight } from './measure'
 import { useVirtualize, useScrollState } from '@/hooks/use-virtualize'
 
@@ -90,11 +90,22 @@ export function useVirtualizedList<T>(
     prevWidth.current = width
   }
 
-  // Precompute strategy heights once per items/width change.
+  // Precompute strategy heights incrementally.
+  // Cache by (id, strategy ref, width) — only recompute when the strategy object changes.
+  // This means 100 static messages + 1 streaming message = 1 recomputation per frame, not 101.
+  const strategyCache = useRef(new Map<string | number, { strategy: MeasureStrategy; width: number; height: number }>())
   const strategyHeights = useMemo(() => {
     const m = new Map<string | number, number>()
+    const cache = strategyCache.current
     for (const item of items) {
-      m.set(item.id, resolveHeight(item.strategy, width))
+      const cached = cache.get(item.id)
+      if (cached && cached.strategy === item.strategy && cached.width === width) {
+        m.set(item.id, cached.height)
+      } else {
+        const h = resolveHeight(item.strategy, width)
+        m.set(item.id, h)
+        cache.set(item.id, { strategy: item.strategy, width, height: h })
+      }
     }
     return m
   }, [items, width])
