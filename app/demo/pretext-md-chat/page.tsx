@@ -22,26 +22,33 @@ type ChatMessage = {
 
 const plugins = defaultPlugins()
 
+// Bubble layout — shared between strategy and renderer
+const BUBBLE = {
+  paddingY: 16,       // py-2 (8+8)
+  paddingX: 24,       // px-3 (12+12)
+  listPaddingX: 32,   // px-4 on flex-col container (16+16)
+  userWidthRatio: 0.7,
+} as const
+
 function messageStrategy(msg: ChatMessage): MeasureStrategy {
   return {
     kind: 'computed',
     measure: (width) => {
-      const contentWidth = msg.role === 'user' ? (width - 32) * 0.7 - 24 : width - 32 - 24
-      let height = 16 // padding
+      const available = width - BUBBLE.listPaddingX
+      const bubbleInner = msg.role === 'user'
+        ? available * BUBBLE.userWidthRatio - BUBBLE.paddingX
+        : available - BUBBLE.paddingX
+      let height = BUBBLE.paddingY
 
-      // Reasoning (collapsed by default: 33px + 8px gap)
-      if (msg.reasoning) height += 33 + 8
-
-      // Tool invocations (collapsed by default: 33px each + 8px gap each)
+      if (msg.reasoning) height += COLLAPSIBLE_HEIGHT + COLLAPSIBLE_GAP
       if (msg.toolInvocations?.length) {
-        height += msg.toolInvocations.length * (33 + 8)
+        height += msg.toolInvocations.length * (COLLAPSIBLE_HEIGHT + COLLAPSIBLE_GAP)
       }
 
-      // Markdown body via pretext
       if (msg.content) {
         const blocks = parse(msg.content)
         const result = measureBlocks(blocks, {
-          maxWidth: contentWidth,
+          maxWidth: bubbleInner,
           fonts: defaultConfig.fonts,
           lineHeights: defaultConfig.lineHeights,
           plugins,
@@ -232,7 +239,11 @@ function ChatMessageRenderer({ message, maxWidth }: {
   )
 }
 
-// --- Interactive components — report to parent after state change ---
+// --- Interactive components ---
+// Each declares its collapsed height for the measurement strategy.
+
+const COLLAPSIBLE_HEIGHT = 34 // py-2 (16) + text-xs line (16) + border (2)
+const COLLAPSIBLE_GAP = 8    // mb-2
 
 function ReasoningBlock({ reasoning }: { reasoning: string }) {
   const [open, setOpen] = useState(false)

@@ -152,15 +152,24 @@ export type MeasureResult = {
   blocks: MeasuredBlock[]
 }
 
-// --- Embed plugin system ---
+// --- Plugin system ---
 
 export type EmbedMeasurement =
   | { kind: 'fixed'; height: number }
   | { kind: 'computed'; height: number }
   | { kind: 'aspect-ratio'; ratio: number; maxHeight?: number }
 
+/** Context passed to plugins for recursive measurement. */
+export type PluginContext = {
+  measureBlocks: (blocks: BlockNode[], config: MeasureConfig) => MeasureResult
+  config: MeasureConfig
+}
+
 export type EmbedPlugin = {
   name: string
   match: (node: BlockNode) => boolean
-  measure: (node: any, maxWidth: number) => EmbedMeasurement
+  /** Simple measurement — returns a height. For leaf blocks (code, image, hr). */
+  measure: (node: any, maxWidth: number, ctx?: PluginContext) => EmbedMeasurement
+  /** Full measurement — returns MeasuredBlock with children/lines. For container blocks (blockquote, list). */
+  measureBlock?: (node: any, ctx: PluginContext) => MeasuredBlock
 }

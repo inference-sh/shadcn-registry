@@ -27,16 +27,28 @@ export function useVirtualizedList<T>(
   const scroll = useScrollState()
   const getScrollEl = scroll.getElement
 
-  // Height cache: measured DOM heights, used for spacer sizing.
+  // --- Height tracking ---
+  // heightCache: RO-measured DOM heights, used by positionItems for accurate spacers.
+  // baselineCache: first measured height per mount (= collapsed state).
+  //
+  // Why baseline exists: when a user expands a collapsible (e.g. reasoning block),
+  // scrolls away (item unmounts), then scrolls back (item remounts collapsed),
+  // the spacer must reflect the collapsed height — not the expanded height.
+  // On unmount, we reset heightCache to baseline and correct scrollTop by the delta.
+  // Without this, the spacer would keep the expanded height, causing a jump on remount.
+  //
+  // Why scheduleFlush (flushSync) exists: the spacer update and scrollTop correction
+  // must happen in the same paint frame. If they're split across frames, the user sees
+  // a 1-frame flicker (spacer shrinks, then scrollTop corrects). flushSync forces
+  // React to re-render synchronously inside a microtask, so useLayoutEffect can apply
+  // the scrollTop correction before the browser paints. This only fires on the rare
+  // expand→scroll-away path — normal scrolling uses the cheap rAF path.
   const heightCache = useRef(new Map<string | number, number>())
-
-  // Baseline: first measured height per mount (= collapsed state).
   const baselineCache = useRef(new Map<string | number, number>())
 
-  // Version counter — triggers re-position when cache changes.
   const [version, setVersion] = useState(0)
 
-  // rAF-batched version bump for normal RO updates (item mount).
+  // Normal path: rAF-batched version bump (cheap, max 1 re-render per frame)
   const rafScheduled = useRef(false)
   function scheduleVersionBump() {
     if (rafScheduled.current) return
@@ -47,8 +59,7 @@ export function useVirtualizedList<T>(
     })
   }
 
-  // Microtask-batched flushSync for expanded-item unmount.
-  // Forces spacer + scrollTop to update in the same paint frame.
+  // Expand→unmount path: microtask + flushSync for atomic spacer + scroll correction
   const flushScheduled = useRef(false)
   function scheduleFlush() {
     if (flushScheduled.current) return
@@ -56,11 +67,9 @@ export function useVirtualizedList<T>(
     queueMicrotask(() => {
       flushScheduled.current = false
       flushSync(() => setVersion(v => v + 1))
-      // useLayoutEffect runs inside flushSync re-render → applies pendingCorrection
     })
   }
 
-  // Pending scroll correction accumulated during unmount.
   const pendingCorrection = useRef(0)
 
   useLayoutEffect(() => {

@@ -5,6 +5,7 @@ import { parse } from '../core/parser'
 import { measureBlocks } from '../core/block-layout'
 import type {
   BlockNode,
+  ListNode,
   InlineItem,
   MeasuredBlock,
   MeasuredLine,
@@ -18,6 +19,7 @@ import type {
 import { usePretextMdConfig } from './context'
 import {
   defaultPlugins,
+  renderCodeBlock,
   renderYouTube,
   renderImage,
 } from './plugins'
@@ -27,12 +29,34 @@ const DEFAULT_PLUGINS = defaultPlugins()
 
 // --- Plugin render registry ---
 // Maps plugin name → render function. Plugins own both measure and render.
+// Receives MeasuredBlock so container plugins can render measured children.
 
-type PluginRenderer = (node: BlockNode) => React.ReactNode
+type PluginRenderer = (block: MeasuredBlock, renderChild: (b: MeasuredBlock) => React.ReactNode) => React.ReactNode
 
 const defaultRenderers: Record<string, PluginRenderer> = {
-  'youtube': (n) => renderYouTube(n as ImageNode),
-  'image': (n) => renderImage(n as ImageNode),
+  'code-block': (b) => renderCodeBlock(b.node as CodeBlockNode),
+  'blockquote': (b, renderChild) => (
+    <blockquote className="border-l-2 border-muted-foreground/30 pl-4">
+      {b.children?.map((child, i) => <React.Fragment key={i}>{renderChild(child)}</React.Fragment>)}
+    </blockquote>
+  ),
+  'list': (b) => {
+    const node = b.node as ListNode
+    const Tag = node.ordered ? 'ol' : 'ul'
+    return (
+      <Tag className={node.ordered ? 'list-decimal pl-6' : 'list-disc pl-6'} start={node.start}>
+        {b.items?.map((measuredBlocks, i) => (
+          <li key={i}>
+            {measuredBlocks.map((child, j) => (
+              <MeasuredBlockRenderer key={j} block={child} />
+            ))}
+          </li>
+        ))}
+      </Tag>
+    )
+  },
+  'youtube': (b) => renderYouTube(b.node as ImageNode),
+  'image': (b) => renderImage(b.node as ImageNode),
   'hr': () => <hr className="border-border" />,
 }
 
@@ -163,31 +187,19 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
   const { plugins, renderers } = usePlugins()
   const node = block.node
 
-  // Plugin-rendered blocks — natural flow, no absolute positioning
+  // Plugin-rendered blocks
   const plugin = findPluginForNode(node, plugins)
   if (plugin) {
     const render = renderers[plugin.name]
-    if (render) return <>{render(node)}</>
+    if (render) return <>{render(block, (child) => <MeasuredBlockRenderer block={child} />)}</>
   }
 
-  // Built-in block types
+  // Core inline block types
   switch (node.kind) {
     case 'paragraph':
       return <MeasuredInlineBlock block={block} tag="p" />
     case 'heading':
       return <MeasuredInlineBlock block={block} tag={`h${node.level}`} />
-    case 'code-block': {
-      const codeNode = node as CodeBlockNode
-      return (
-        <CodeBlock language={codeNode.lang} showHeader={!!codeNode.lang} showLineNumbers={false} className="!my-0 !h-auto">
-          {codeNode.code}
-        </CodeBlock>
-      )
-    }
-    case 'blockquote':
-      return <MeasuredBlockquote block={block} />
-    case 'list':
-      return <MeasuredList block={block} />
     default:
       return null
   }
@@ -238,31 +250,6 @@ function FragmentRenderer({ fragment }: { fragment: LineFragment }) {
   return <>{space}<span style={style}>{content}</span></>
 }
 
-function MeasuredBlockquote({ block }: { block: MeasuredBlock }) {
-  return (
-    <blockquote className="border-l-2 border-muted-foreground/30 pl-4">
-      {block.children?.map((child, i) => (
-        <MeasuredBlockRenderer key={i} block={child} />
-      ))}
-    </blockquote>
-  )
-}
-
-function MeasuredList({ block }: { block: MeasuredBlock }) {
-  const node = block.node as BlockNode & { kind: 'list' }
-  const Tag = node.ordered ? 'ol' : 'ul'
-  return (
-    <Tag className={node.ordered ? 'list-decimal pl-6' : 'list-disc pl-6'} start={node.start}>
-      {block.items?.map((measuredBlocks, i) => (
-        <li key={i}>
-          {measuredBlocks.map((child, j) => (
-            <MeasuredBlockRenderer key={j} block={child} />
-          ))}
-        </li>
-      ))}
-    </Tag>
-  )
-}
 
 // ============================================================
 // FLOW MODE — normal browser layout, same parsed AST
@@ -271,11 +258,11 @@ function MeasuredList({ block }: { block: MeasuredBlock }) {
 function FlowBlockRenderer({ node }: { node: BlockNode }) {
   const { plugins, renderers } = usePlugins()
 
-  // Plugin-rendered blocks
+  // Leaf plugins (code-block, youtube, image, hr) work in flow mode too
   const plugin = findPluginForNode(node, plugins)
-  if (plugin) {
+  if (plugin && !plugin.measureBlock) {
     const render = renderers[plugin.name]
-    if (render) return <>{render(node)}</>
+    if (render) return <>{render({ node, height: 0, y: 0 }, () => null)}</>
   }
 
   switch (node.kind) {

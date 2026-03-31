@@ -4,11 +4,9 @@
 // Block types like code-block, image, hr are measured by plugins — the coordinator
 // only handles paragraph, heading, list, blockquote natively.
 
-import { splitLines } from '@/components/infsh/code-block/utils'
 import { layoutInline } from './inline-layout'
 import type {
   BlockNode,
-  CodeBlockNode,
   MeasuredBlock,
   MeasuredLine,
   MeasureConfig,
@@ -18,25 +16,11 @@ import type {
   HeadingNode,
   EmbedPlugin,
   EmbedMeasurement,
+  PluginContext,
 } from './types'
 
-// Uniform gap between all blocks — like space-y on a flex container.
-// Blocks own zero margin; the coordinator owns all spacing.
+// Core layout constant — the coordinator owns block spacing
 const BLOCK_GAP = 12
-// hr default height (overridable by plugin)
-const HR_HEIGHT = 1
-// blockquote left padding + border
-const BLOCKQUOTE_INDENT = 20
-// list item indent
-const LIST_INDENT = 24
-
-// Code block chrome dimensions (must match renderer CSS)
-export const CODE_BLOCK = {
-  headerHeight: 33,  // py-2 (16px) + text-xs line (16px) + border-b (1px)
-  paddingX: 32,      // p-4 left + right
-  paddingY: 32,      // p-4 top + bottom
-  border: 2,         // border top + bottom
-} as const
 
 
 function getHeadingFont(level: HeadingNode['level']): keyof FontConfig {
@@ -45,24 +29,6 @@ function getHeadingFont(level: HeadingNode['level']): keyof FontConfig {
 
 function getHeadingLineHeight(level: HeadingNode['level'], lineHeights: LineHeightConfig): number {
   return lineHeights[`h${level}` as keyof LineHeightConfig]
-}
-
-/**
- * Try to measure a block with a matching plugin.
- * Returns the measurement if a plugin matches, null otherwise.
- */
-function tryPluginMeasure(
-  block: BlockNode,
-  maxWidth: number,
-  plugins: EmbedPlugin[] | undefined,
-): EmbedMeasurement | null {
-  if (!plugins) return null
-  for (const plugin of plugins) {
-    if (plugin.match(block)) {
-      return plugin.measure(block as any, maxWidth)
-    }
-  }
-  return null
 }
 
 function resolveEmbedHeight(m: EmbedMeasurement, maxWidth: number): number {
@@ -75,6 +41,14 @@ function resolveEmbedHeight(m: EmbedMeasurement, maxWidth: number): number {
       return m.maxHeight ? Math.min(h, m.maxHeight) : h
     }
   }
+}
+
+function findPlugin(block: BlockNode, plugins?: EmbedPlugin[]): EmbedPlugin | null {
+  if (!plugins) return null
+  for (const p of plugins) {
+    if (p.match(block)) return p
+  }
+  return null
 }
 
 /**
@@ -106,29 +80,29 @@ export function measureBlocks(
 }
 
 function measureBlock(block: BlockNode, config: MeasureConfig): MeasuredBlock {
-  // Try plugins first — they can handle any block type
-  const pluginResult = tryPluginMeasure(block, config.maxWidth, config.plugins)
-  if (pluginResult) {
-    return { node: block, height: resolveEmbedHeight(pluginResult, config.maxWidth), y: 0 }
+  const ctx: PluginContext = { measureBlocks, config }
+
+  // Plugins handle all non-inline block types
+  const plugin = findPlugin(block, config.plugins)
+  if (plugin) {
+    // Full measurement: plugin returns MeasuredBlock with children/lines
+    if (plugin.measureBlock) {
+      return plugin.measureBlock(block, ctx)
+    }
+    // Simple measurement: plugin returns height
+    const m = plugin.measure(block as any, config.maxWidth, ctx)
+    return { node: block, height: resolveEmbedHeight(m, config.maxWidth), y: 0 }
   }
 
-  // Built-in handling for core block types
+  // Core handles inline block types natively (paragraphs, headings)
   switch (block.kind) {
     case 'paragraph':
       return measureParagraph(block, config)
     case 'heading':
       return measureHeading(block, config)
-    case 'code-block':
-      return measureCodeBlock(block, config)
-    case 'hr':
-      return { node: block, height: HR_HEIGHT, y: 0 }
-    case 'image':
-      // fallback if no plugin: placeholder
-      return { node: block, height: 300, y: 0 }
-    case 'blockquote':
-      return measureBlockquote(block, config)
-    case 'list':
-      return measureList(block, config)
+    default:
+      // Unknown block without plugin — rough fallback
+      return { node: block, height: 40, y: 0 }
   }
 }
 
@@ -160,43 +134,3 @@ function measureHeading(block: HeadingNode, config: MeasureConfig): MeasuredBloc
   return { node: block, height, y: 0, lines }
 }
 
-function measureBlockquote(block: BlockNode & { kind: 'blockquote' }, config: MeasureConfig): MeasuredBlock {
-  const innerConfig: MeasureConfig = {
-    ...config,
-    maxWidth: config.maxWidth - BLOCKQUOTE_INDENT,
-  }
-  const inner = measureBlocks(block.children, innerConfig)
-  return { node: block, height: inner.height, y: 0, children: inner.blocks }
-}
-
-function measureCodeBlock(block: CodeBlockNode, config: MeasureConfig): MeasuredBlock {
-  const hasHeader = !!block.lang
-  const lineHeight = config.lineHeights.code
-  const numLines = splitLines(block.code).length
-  const contentHeight = numLines * lineHeight
-  const height =
-    (hasHeader ? CODE_BLOCK.headerHeight : 0) +
-    CODE_BLOCK.paddingY +
-    contentHeight +
-    CODE_BLOCK.border
-
-  // No lines data — code blocks render via CodeBlock component, not pretext fragments
-  return { node: block, height, y: 0 }
-}
-
-function measureList(block: BlockNode & { kind: 'list' }, config: MeasureConfig): MeasuredBlock {
-  const innerConfig: MeasureConfig = {
-    ...config,
-    maxWidth: config.maxWidth - LIST_INDENT,
-  }
-  let totalHeight = 0
-  const measuredItems: MeasuredBlock[][] = []
-  for (let i = 0; i < block.items.length; i++) {
-    const itemBlocks = block.items[i]!
-    const inner = measureBlocks(itemBlocks, innerConfig)
-    measuredItems.push(inner.blocks)
-    totalHeight += inner.height
-    // no gap between list items — lineHeight provides natural spacing
-  }
-  return { node: block, height: totalHeight, y: 0, items: measuredItems }
-}
