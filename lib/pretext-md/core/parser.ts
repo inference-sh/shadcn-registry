@@ -36,7 +36,9 @@ import type {
 const parser = unified().use(remarkParse).use(remarkGfm)
 
 export function parse(markdown: string): BlockNode[] {
-  const tree = parser.parse(markdown) as Root
+  // Strip HTML comments before parsing (same as MarkdownRenderer)
+  const cleaned = markdown.replace(/<!--[\s\S]*?-->/g, '')
+  const tree = parser.parse(cleaned) as Root
   return walkBlocks(tree.children)
 }
 
