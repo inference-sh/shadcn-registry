@@ -8,7 +8,7 @@ import React, { memo, useState } from 'react';
 import { MessageCircleDashed } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { CollapsibleSection } from '@/components/ui/collapsible-section';
-import { MarkdownRenderer } from '@/registry/blocks/markdown/markdown-renderer';
+import { Markdown } from '@/lib/pretext-md/react';
 
 // Collapsed trigger: py-0.5 (4px) + flex row with text-xs (~16px line) + icon (12px)
 // CollapsibleSection wrapper adds no extra height when closed
@@ -83,7 +83,7 @@ export const MessageReasoning = memo(function MessageReasoning({
     >
       <div className="px-2 py-1.5">
         <div className="whitespace-pre-wrap text-xs max-h-[200px] overflow-y-auto">
-          <MarkdownRenderer content={reasoning} compact={true} />
+          <Markdown content={reasoning} />
         </div>
       </div>
     </CollapsibleSection>
