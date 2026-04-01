@@ -20,16 +20,36 @@ import { ChevronRight } from 'lucide-react';
 
 const COLLAPSE_THRESHOLD = 3;
 
-// Single tool row height: CollapsibleSection trigger (same as reasoning)
+// Collapsed CollapsibleSection trigger height
 const TOOL_ROW_HEIGHT = 20
 // Collapse toggle button: text-xs + icon + gap
 const COLLAPSE_BUTTON_HEIGHT = 20
 // space-y-1 gap between tool rows
 const TOOL_GAP = 4
-// mt-2 before the tool section
-const TOOL_SECTION_GAP = 8
 // Finish block: my-6 (48px) + divider row (~24px) + result card (~48px)
 const FINISH_BLOCK_HEIGHT = 120
+// Approval UI: header + arguments + buttons
+const APPROVAL_HEIGHT = 100
+// Widget: variable, but reasonable default (RO corrects)
+const WIDGET_HEIGHT = 200
+
+/**
+ * Returns the predicted height of a single tool invocation.
+ * Accounts for different render paths: finish, widget, approval, regular.
+ */
+function measureSingleTool(inv: ToolInvocationDTO): number {
+  // Finish tool
+  if (inv.function?.name === 'finish') return FINISH_BLOCK_HEIGHT
+
+  // Widget (default open, variable height)
+  if (inv.widget) return WIDGET_HEIGHT
+
+  // Awaiting approval (expanded by default with buttons)
+  if (inv.status === ToolInvocationStatusAwaitingApproval) return APPROVAL_HEIGHT
+
+  // Regular collapsed row
+  return TOOL_ROW_HEIGHT
+}
 
 /**
  * Returns the predicted height of a tool invocations section.
@@ -38,23 +58,28 @@ const FINISH_BLOCK_HEIGHT = 120
 export function measureToolInvocations(invocations: ToolInvocationDTO[] | undefined): number {
   if (!invocations?.length) return 0
 
-  // Check for finish tool — different layout
-  const hasFinish = invocations.some(inv => inv.function?.name === 'finish')
-  if (hasFinish) return TOOL_SECTION_GAP + FINISH_BLOCK_HEIGHT
-
   const count = invocations.length
   if (count < COLLAPSE_THRESHOLD) {
-    // All expanded as rows
-    return TOOL_SECTION_GAP + count * TOOL_ROW_HEIGHT + (count - 1) * TOOL_GAP
+    // All shown individually
+    let height = 0
+    for (const inv of invocations) {
+      height += measureSingleTool(inv) + TOOL_GAP
+    }
+    return height - TOOL_GAP // no trailing gap
   }
 
-  // Prominent (needs attention) shown + collapse button + collapsed summary
-  let prominent = 0
+  // Prominent (needs attention) shown individually + collapse button for rest
+  let height = 0
+  let collapsibleCount = 0
   for (const inv of invocations) {
-    if (needsAttention(inv)) prominent++
+    if (needsAttention(inv)) {
+      height += measureSingleTool(inv) + TOOL_GAP
+    } else {
+      collapsibleCount++
+    }
   }
-  const visibleRows = prominent
-  return TOOL_SECTION_GAP + visibleRows * TOOL_ROW_HEIGHT + (visibleRows > 0 ? visibleRows * TOOL_GAP : 0) + COLLAPSE_BUTTON_HEIGHT
+  if (collapsibleCount > 0) height += COLLAPSE_BUTTON_HEIGHT
+  return height
 }
 
 function needsAttention(inv: ToolInvocationDTO): boolean {

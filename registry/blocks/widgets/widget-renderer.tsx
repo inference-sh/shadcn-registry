@@ -1,6 +1,6 @@
 "use client"
 
-import { MarkdownRenderer } from "@/components/infsh/markdown-renderer"
+import { Markdown } from "@/lib/pretext-md/react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -246,7 +246,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
       )
 
     case "markdown":
-      return <MarkdownRenderer content={node.value ?? ""} />
+      return <Markdown content={node.value ?? ""} />
 
     case "image":
       return (

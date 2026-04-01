@@ -5,7 +5,7 @@
  *
  * Renders task output fields with smart type detection:
  * - Files (images, videos, audio) via FilePreview
- * - Markdown text via MarkdownRenderer
+ * - Markdown text via pretext-md
  * - Objects and arrays recursively
  * - Booleans with colored pills
  */
@@ -17,7 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { ChevronDownIcon, ChevronRightIcon, Copy, Check } from 'lucide-react';
 import { FilePreview, type PartialFile } from './file-preview';
-import { MarkdownRenderer } from '@/components/infsh/markdown-renderer';
+import { Markdown } from '@/lib/pretext-md/react';
 
 /** Field schema (simplified from SDK) */
 export interface Field {
@@ -238,7 +238,7 @@ export const OutputField = memo(function OutputField({
               </Button>
               <div className={cn('max-h-[300px] break-all pr-8', clickable ? 'overflow-y-auto' : 'overflow-y-hidden')}>
                 {typeof data === 'string' ? (
-                  <MarkdownRenderer content={data} />
+                  <Markdown content={data} />
                 ) : (
                   <span className="text-sm">{String(data)}</span>
                 )}
