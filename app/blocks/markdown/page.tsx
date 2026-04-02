@@ -223,6 +223,7 @@ npx shadcn@latest add https://ui.inference.sh/r/markdown.json
 const plugins = defaultPlugins()
 
 function VirtualizedDemo({ msgCount, setMsgCount }: { msgCount: number; setMsgCount: (n: number) => void }) {
+  const [vWidth, setVWidth] = useState(100)
   const containerElRef = useRef<HTMLDivElement | null>(null)
   const roRef = useRef<ResizeObserver | null>(null)
   const [chatWidth, setChatWidth] = useState(0)
@@ -272,15 +273,9 @@ function VirtualizedDemo({ msgCount, setMsgCount }: { msgCount: number; setMsgCo
     <>
       <div className="flex items-center gap-4 flex-wrap">
         <label className="text-sm font-medium whitespace-nowrap">Items: {msgCount}</label>
-        <input
-          type="range"
-          min={50}
-          max={1000}
-          step={50}
-          value={msgCount}
-          onChange={(e) => setMsgCount(Number(e.target.value))}
-          className="flex-1 max-w-[150px]"
-        />
+        <input type="range" min={50} max={1000} step={50} value={msgCount} onChange={(e) => setMsgCount(Number(e.target.value))} className="flex-1 max-w-[120px]" />
+        <label className="text-sm font-medium whitespace-nowrap">Width: {vWidth}%</label>
+        <input type="range" min={30} max={100} step={5} value={vWidth} onChange={(e) => setVWidth(Number(e.target.value))} className="flex-1 max-w-[120px]" />
         <div className="flex gap-3 text-xs">
           <span className="bg-muted rounded px-2 py-1">{list.totalCount} total</span>
           <span className="bg-primary/10 text-primary rounded px-2 py-1">{list.renderedCount} in DOM</span>
@@ -293,8 +288,8 @@ function VirtualizedDemo({ msgCount, setMsgCount }: { msgCount: number; setMsgCo
           containerRef(el)
           list.scrollRef(el)
         }}
-        className="border rounded-lg overflow-y-auto bg-muted/10"
-        style={{ height: 400 }}
+        className="border rounded-lg overflow-y-auto bg-muted/10 transition-[width] duration-150"
+        style={{ height: 400, width: `${vWidth}%` }}
       >
         <div style={{ height: list.topSpacer }} />
         <div className="flex flex-col gap-3 px-4 py-3">
