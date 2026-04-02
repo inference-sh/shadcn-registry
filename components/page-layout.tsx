@@ -5,7 +5,7 @@ import { SidebarLight, NavItem } from "@/registry/blocks/sidebar-light/sidebar-l
 import { TableOfContents, TocItem } from "@/registry/blocks/table-of-contents/table-of-contents"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, FileText, Puzzle, Wrench, Home, Layers, Code, Play, ImageIcon, ListOrdered, PanelLeft, List, Bot, Component, Menu, X, Activity, ChevronsDown } from "lucide-react"
+import { MessageSquare, FileText, Puzzle, Wrench, Home, Layers, Code, Play, ImageIcon, ListOrdered, PanelLeft, List, Bot, Component, Menu, X, Activity, ChevronsDown, Zap } from "lucide-react"
 
 interface PageLayoutProps {
   children: React.ReactNode
@@ -103,6 +103,18 @@ const navigation: NavItem[] = [
             icon: ChevronsDown,
           },
         ],
+      },
+    ],
+  },
+  {
+    title: "demos",
+    href: "#",
+    icon: Zap,
+    items: [
+      {
+        title: "virtualized chat",
+        href: "/demos/chat",
+        icon: MessageSquare,
       },
     ],
   },
