@@ -24,26 +24,30 @@ import type { MeasureStrategy } from '@/lib/virtualize'
 const plugins = defaultPlugins()
 
 export function messageStrategy(message: ChatMessageDTO): MeasureStrategy {
+  // Pre-parse once — AST doesn't change with width.
+  // Only measureBlocks() depends on width. This avoids re-parsing on resize.
+  const text = message.content?.find(
+    c => c.type === ChatMessageContentTypeText
+  )?.text
+  const blocks = text?.trim() ? parse(text) : null
+
+  // Pre-extract static values
+  const reasoning = message.role === ChatMessageRoleAssistant
+    ? message.content?.find(c => c.type === ChatMessageContentTypeReasoning)?.text
+    : undefined
+  const toolInvocations = message.role === ChatMessageRoleAssistant
+    ? message.tool_invocations
+    : undefined
+
   return {
     kind: 'computed',
     measure: (width) => {
       const bubble = measureBubbleChrome(message.role, width)
       let height = bubble.paddingY
 
-      // Reasoning (collapsed by default)
-      if (message.role === ChatMessageRoleAssistant) {
-        const reasoning = message.content?.find(
-          c => c.type === ChatMessageContentTypeReasoning
-        )?.text
-        height += measureReasoning(reasoning, false)
-      }
+      height += measureReasoning(reasoning, false)
 
-      // Markdown body (pretext measures both user plain text and assistant markdown)
-      const text = message.content?.find(
-        c => c.type === ChatMessageContentTypeText
-      )?.text
-      if (text?.trim()) {
-        const blocks = parse(text)
+      if (blocks) {
         const result = measureBlocks(blocks, {
           maxWidth: bubble.innerWidth,
           fonts: defaultConfig.fonts,
@@ -53,10 +57,7 @@ export function messageStrategy(message: ChatMessageDTO): MeasureStrategy {
         height += result.height
       }
 
-      // Tool invocations
-      if (message.role === ChatMessageRoleAssistant) {
-        height += measureToolInvocations(message.tool_invocations)
-      }
+      height += measureToolInvocations(toolInvocations)
 
       return height
     },

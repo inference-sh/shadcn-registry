@@ -91,24 +91,58 @@ export function useVirtualizedList<T>(
   }
 
   // Precompute strategy heights incrementally.
-  // Cache by (id, strategy ref, width) — only recompute when the strategy object changes.
-  // This means 100 static messages + 1 streaming message = 1 recomputation per frame, not 101.
+  // - Same width + same strategy ref → cache hit (free)
+  // - Same width + different strategy ref → recompute that item only (streaming)
+  // - Different width → scale old heights proportionally for off-screen items,
+  //   only recompute visible items. RO corrects when off-screen items scroll in.
   const strategyCache = useRef(new Map<string | number, { strategy: MeasureStrategy; width: number; height: number }>())
   const strategyHeights = useMemo(() => {
     const m = new Map<string | number, number>()
     const cache = strategyCache.current
+
+    // Find visible range for lazy recomputation on width change
+    const scrollEl = getScrollEl()
+    const scrollTop = scrollEl?.scrollTop ?? 0
+    const visibleTop = scrollTop
+    const visibleBottom = scrollTop + viewportHeight
+
+    // Track cumulative y for determining visibility
+    let y = 0
+
     for (const item of items) {
       const cached = cache.get(item.id)
+
       if (cached && cached.strategy === item.strategy && cached.width === width) {
+        // Exact cache hit — same strategy, same width
         m.set(item.id, cached.height)
+        y += cached.height + gap
+      } else if (cached && cached.width !== width && cached.strategy === item.strategy) {
+        // Width changed — check if item is near the visible range
+        const isNearVisible = y < visibleBottom + viewportHeight && y + cached.height > visibleTop - viewportHeight
+        if (isNearVisible) {
+          // Visible or near-visible: recompute accurately
+          const h = resolveHeight(item.strategy, width)
+          m.set(item.id, h)
+          cache.set(item.id, { strategy: item.strategy, width, height: h })
+          y += h + gap
+        } else {
+          // Off-screen: proportional scale (fast approximation, RO corrects later)
+          const ratio = width / cached.width
+          const h = Math.round(cached.height * ratio)
+          m.set(item.id, h)
+          // Don't update cache — keep old entry so next width change can scale from real values
+          y += h + gap
+        }
       } else {
+        // New item or strategy changed — must compute
         const h = resolveHeight(item.strategy, width)
         m.set(item.id, h)
         cache.set(item.id, { strategy: item.strategy, width, height: h })
+        y += h + gap
       }
     }
     return m
-  }, [items, width])
+  }, [items, width, gap, viewportHeight, getScrollEl])
 
   // Position items using cached heights → strategy fallback.
   const { positioned, totalHeight } = useMemo(
