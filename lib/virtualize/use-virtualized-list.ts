@@ -82,11 +82,26 @@ export function useVirtualizedList<T>(
     }
   })
 
-  // Clear caches when width changes — heights are stale at new width.
+  // On width change: clear RO caches (stale at new width) and save scroll anchor
+  // so we can restore position after recomputation.
   const prevWidth = useRef(width)
+  const scrollAnchor = useRef<{ itemId: string | number; offset: number } | null>(null)
+  const prevPositioned = useRef<PositionedItem<T>[]>([])
   if (prevWidth.current !== width) {
     heightCache.current.clear()
     baselineCache.current.clear()
+    // Save anchor: which item is at viewport top + pixel offset into that item
+    const scrollEl = getScrollEl()
+    const prev = prevPositioned.current
+    if (scrollEl && prev.length > 0) {
+      const st = scrollEl.scrollTop
+      for (const p of prev) {
+        if (p.y + p.height > st) {
+          scrollAnchor.current = { itemId: p.id, offset: st - p.y }
+          break
+        }
+      }
+    }
     prevWidth.current = width
   }
 
@@ -150,6 +165,23 @@ export function useVirtualizedList<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, width, gap, version, strategyHeights],
   )
+
+  // Store positioned for scroll anchor on next width change
+  prevPositioned.current = positioned
+
+  // Restore scroll position after width change
+  useLayoutEffect(() => {
+    const anchor = scrollAnchor.current
+    if (!anchor) return
+    scrollAnchor.current = null
+    const scrollEl = getScrollEl()
+    if (!scrollEl) return
+    // Find the anchored item in new positions
+    const item = positioned.find(p => p.id === anchor.itemId)
+    if (item) {
+      scrollEl.scrollTop = item.y + anchor.offset
+    }
+  }, [positioned, getScrollEl])
 
   // Y-position lookup for "above viewport?" check (ref for stable callback access)
   const yLookupRef = useRef(new Map<string | number, number>())
