@@ -5,7 +5,7 @@
  * Files are tracked locally; SDK's sendMessage handles actual uploads.
  */
 
-import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo, forwardRef, useImperativeHandle } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, Square, ImagePlus, Paperclip, File as FileIcon, AlertCircle, X, HelpCircle } from 'lucide-react';
@@ -30,6 +30,10 @@ import {
   showFileUploadDialog,
   type FileUpload,
 } from '@/components/infsh/agent/file-upload';
+
+export interface ChatInputHandle {
+  setInput: (text: string) => void;
+}
 
 interface ChatInputProps {
   placeholder?: string;
@@ -79,14 +83,14 @@ const DragOverlay = memo(function DragOverlay({ isDragging }: DragOverlayProps) 
  * <ChatInput placeholder="Ask me anything..." allowAttachments />
  * ```
  */
-export const ChatInput = memo(function ChatInput({
+export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
   placeholder = 'ask a question...',
   className,
   allowAttachments,
   allowFiles = true,
   allowImages = true,
   examplePrompts,
-}: ChatInputProps) {
+}, ref) {
   // Backwards compatibility: if allowAttachments is explicitly false, disable both
   const showFileButton = allowAttachments !== false && allowFiles;
   const showImageButton = allowAttachments !== false && allowImages;
@@ -101,6 +105,13 @@ export const ChatInput = memo(function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragCounterRef = useRef(0);
+
+  useImperativeHandle(ref, () => ({
+    setInput(text: string) {
+      setValue(text);
+      textareaRef.current?.focus();
+    },
+  }));
 
   // File upload manager - uploads files on select
   const {
@@ -462,6 +473,6 @@ export const ChatInput = memo(function ChatInput({
       </div>
     </div>
   );
-});
+}));
 
 ChatInput.displayName = 'ChatInput';
