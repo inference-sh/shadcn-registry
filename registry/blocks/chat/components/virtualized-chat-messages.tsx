@@ -186,7 +186,7 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
           {/* Visible messages */}
           <div className="flex flex-col gap-2 px-4 py-3">
             {list.items.map(item => (
-              <div key={item.id} ref={list.getItemRef(item.id)}>
+              <div key={item.id} ref={list.getItemRef(item.id)} className="min-w-0">
                 {renderMessage(item.data)}
               </div>
             ))}

@@ -8,7 +8,7 @@
 import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, Square, ImagePlus, Paperclip, File as FileIcon, AlertCircle, X } from 'lucide-react';
+import { ArrowUp, Square, ImagePlus, Paperclip, File as FileIcon, AlertCircle, X, HelpCircle } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -38,6 +38,8 @@ interface ChatInputProps {
   allowFiles?: boolean;
   allowImages?: boolean;
   onFilesChange?: (files: File[]) => void;
+  /** Example prompts shown in a ? dropdown */
+  examplePrompts?: string[];
 }
 
 // =============================================================================
@@ -83,6 +85,7 @@ export const ChatInput = memo(function ChatInput({
   allowAttachments,
   allowFiles = true,
   allowImages = true,
+  examplePrompts,
 }: ChatInputProps) {
   // Backwards compatibility: if allowAttachments is explicitly false, disable both
   const showFileButton = allowAttachments !== false && allowFiles;
@@ -391,6 +394,38 @@ export const ChatInput = memo(function ChatInput({
             >
               <ImagePlus className="h-4 w-4" />
             </Button>
+          )}
+          {examplePrompts && examplePrompts.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                  disabled={isBusy}
+                  aria-label="Example prompts"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-1 w-72" align="start" side="top" sideOffset={8}>
+                <div className="flex flex-col">
+                  {examplePrompts.map((prompt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setValue(prompt);
+                        textareaRef.current?.focus();
+                      }}
+                      className="text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
 

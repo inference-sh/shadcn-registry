@@ -106,8 +106,6 @@ function findPluginForNode(
 
 type MarkdownProps = {
   content: string
-  /** Fixed width for measurement. If omitted, auto-measures container width. */
-  maxWidth?: number
   className?: string
   measured?: boolean
   plugins?: EmbedPlugin[]
@@ -116,7 +114,6 @@ type MarkdownProps = {
 
 export const Markdown = memo(function Markdown({
   content,
-  maxWidth: maxWidthProp,
   className,
   measured = true,
   plugins: userPlugins,
@@ -129,72 +126,60 @@ export const Markdown = memo(function Markdown({
     [userRenderers],
   )
 
-  // Auto-measure container width when maxWidth not provided
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
-  // Sync read on mount — get width before first paint (no flow-mode flash)
+  // Measure the parent's width, not our own container.
+  // Measured lines use white-space:nowrap which prevents the container from
+  // shrinking below content width — reading our own width would be circular.
   useLayoutEffect(() => {
-    if (maxWidthProp !== undefined) return
-    const el = containerRef.current
-    if (el) {
-      const w = Math.floor(el.getBoundingClientRect().width)
+    const parent = containerRef.current?.parentElement
+    if (parent) {
+      const w = Math.floor(parent.clientWidth)
       if (w > 0) setContainerWidth(w)
     }
-  }, [maxWidthProp])
+  }, [])
 
-  // RO for subsequent resize updates
   useEffect(() => {
-    if (maxWidthProp !== undefined) return
-    const el = containerRef.current
-    if (!el || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(([entry]) => {
-      if (entry) {
-        const w = Math.floor(entry.contentRect.width)
-        setContainerWidth(prev => Math.abs(prev - w) > 1 ? w : prev)
-      }
+    const parent = containerRef.current?.parentElement
+    if (!parent || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => {
+      const w = Math.floor(parent.clientWidth)
+      setContainerWidth(prev => Math.abs(prev - w) > 1 ? w : prev)
     })
-    ro.observe(el)
+    ro.observe(parent)
     return () => ro.disconnect()
-  }, [maxWidthProp])
+  }, [])
 
-  const maxWidth = maxWidthProp ?? containerWidth
+  const blocks = useMemo(() => content ? parse(content) : [], [content])
 
-  const data = useMemo(() => {
-    if (!content) return null
-    const blocks = parse(content)
-    if (!measured || maxWidth <= 0) return { blocks, result: null }
+  const measuredResult = useMemo(() => {
+    if (!measured || containerWidth <= 0 || blocks.length === 0) return null
     const measureConfig: MeasureConfig = {
-      maxWidth,
+      maxWidth: containerWidth,
       fonts: config.fonts,
       lineHeights: config.lineHeights,
       plugins,
     }
-    return { blocks, result: measureBlocks(blocks, measureConfig) }
-  }, [content, maxWidth, config.fonts, config.lineHeights, measured, plugins])
-
-  if (!data) return null
+    return measureBlocks(blocks, measureConfig)
+  }, [blocks, containerWidth, config.fonts, config.lineHeights, measured, plugins])
 
   const ctx = { plugins, renderers }
 
-  if (!data.result) {
-    return (
-      <PluginsContext.Provider value={ctx}>
-        <div ref={containerRef} className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12, width: maxWidthProp === undefined ? '100%' : undefined }}>
-          {data.blocks.map((block, i) => (
-            <FlowBlockRenderer key={i} node={block} />
-          ))}
-        </div>
-      </PluginsContext.Provider>
-    )
-  }
-
+  // Always render the container — never unmount the ref.
+  // Content inside is gated on width + content availability.
   return (
     <PluginsContext.Provider value={ctx}>
-      <div ref={containerRef} className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12, width: maxWidthProp === undefined ? '100%' : undefined }}>
-        {data.result.blocks.map((block, i) => (
-          <MeasuredBlockRenderer key={i} block={block} />
-        ))}
+      <div ref={containerRef} className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+        {measuredResult ? (
+          measuredResult.blocks.map((block, i) => (
+            <MeasuredBlockRenderer key={i} block={block} />
+          ))
+        ) : blocks.length > 0 ? (
+          blocks.map((block, i) => (
+            <FlowBlockRenderer key={i} node={block} />
+          ))
+        ) : null}
       </div>
     </PluginsContext.Provider>
   )
