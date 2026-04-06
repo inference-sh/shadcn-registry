@@ -26,7 +26,7 @@
       "description": "Virtualized chat with measured markdown. Auto-scroll, message strategies, typing indicators.",
       "dependencies": ["@inferencesh/sdk"],
       "registryDependencies": [
-        "button", "scroll-area", "textarea", "tooltip", "spinner", "command", "popover",
+        "button", "collapsible", "scroll-area", "textarea", "tooltip", "spinner", "command", "popover",
         "https://ui.inference.sh/r/pretext-md.json",
         "https://ui.inference.sh/r/virtualize.json"
       ],
@@ -41,6 +41,7 @@
         { "path": "registry/blocks/chat/components/message-reasoning.tsx", "type": "registry:component", "target": "components/infsh/agent/message-reasoning.tsx" },
         { "path": "registry/blocks/chat/components/message-status-indicator.tsx", "type": "registry:component", "target": "components/infsh/agent/message-status-indicator.tsx" },
         { "path": "registry/blocks/chat/components/file-upload.tsx", "type": "registry:component", "target": "components/infsh/agent/file-upload.tsx" },
+        { "path": "components/ui/collapsible-section.tsx", "type": "registry:component", "target": "components/ui/collapsible-section.tsx" },
         { "path": "registry/blocks/chat/lib/message-strategy.ts", "type": "registry:lib", "target": "lib/message-strategy.ts" },
         { "path": "registry/blocks/chat/lib/use-auto-scroll.ts", "type": "registry:hook", "target": "hooks/use-auto-scroll.ts" },
         { "path": "hooks/use-shrinkwrap.ts", "type": "registry:hook", "target": "hooks/use-shrinkwrap.ts" },
