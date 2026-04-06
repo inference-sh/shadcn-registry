@@ -1,8 +1,8 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "markdown",
-  "title": "Markdown Renderer",
-  "description": "High-fidelity markdown with code blocks, YouTube embeds, and zoomable images.",
+  "title": "Markdown Renderer (legacy)",
+  "description": "react-markdown based renderer. Consider using pretext-md instead.",
   "dependencies": [
     "react-markdown",
     "remark-gfm"
