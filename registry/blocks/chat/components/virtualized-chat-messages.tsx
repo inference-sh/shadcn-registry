@@ -20,7 +20,7 @@ import {
   ChatMessageContentTypeReasoning,
 } from '@inferencesh/sdk'
 import { useVirtualizedList, type VirtualItem } from '@/lib/virtualize'
-import { messageStrategy } from '../lib/message-strategy'
+import { messageStrategy } from '@/lib/message-strategy'
 
 /** Skip tool-role messages and empty messages (no text, no reasoning, no tools). */
 function isRenderable(msg: ChatMessageDTO): boolean {

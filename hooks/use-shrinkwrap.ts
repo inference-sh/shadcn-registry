@@ -45,8 +45,6 @@ export function useShrinkwrap(
     const result = shrinkwrap(text, { maxWidth: contentWidth, fonts, lineHeights })
     if (result.width >= contentWidth) return undefined
 
-    // +4px safety margin: canvas measurement can differ from browser text layout
-    // by a few subpixels due to font hinting, kerning, and rounding differences
-    return Math.ceil(result.width) + paddingX * 2 + 4
+    return result.width + paddingX * 2
   }, [text, maxWidth, paddingX, font, lineHeight, config])
 }

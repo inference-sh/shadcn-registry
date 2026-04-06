@@ -1,7 +1,3 @@
-// Measurement strategy contract.
-// Every component that participates in a virtualized list MUST declare one.
-// TypeScript enforces this — you can't add an unmeasurable item.
-
 export type MeasureStrategy =
   | FixedStrategy
   | CappedStrategy
