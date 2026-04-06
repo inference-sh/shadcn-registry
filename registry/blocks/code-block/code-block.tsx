@@ -209,7 +209,7 @@ export const CompactCodeBlock = memo(function CompactCodeBlock({
   return (
     <div
       className={cn(
-        'relative group/codeblock block bg-muted/30 rounded-lg max-w-full min-w-0 p-2',
+        'relative group/codeblock block bg-muted/30 rounded-lg max-w-full min-w-0',
         className
       )}
     >
@@ -224,35 +224,37 @@ export const CompactCodeBlock = memo(function CompactCodeBlock({
           <Copy className="h-3.5 w-3.5 text-muted-foreground" />
         )}
       </button>
-      <pre className="overflow-x-auto">
-        <code className="grid">
-          {lines.map((line, i) => (
-            <span key={i} className="grid grid-cols-[auto_1fr] gap-4">
-              <span
-                className={cn(
-                  textSize,
-                  'text-muted-foreground/30 select-none text-right min-w-[2ch]'
-                )}
-              >
-                {i + 1}
+      <div className="overflow-y-auto max-h-[inherit] p-2">
+        <pre className="overflow-x-auto">
+          <code className="grid">
+            {lines.map((line, i) => (
+              <span key={i} className="grid grid-cols-[auto_1fr] gap-4">
+                <span
+                  className={cn(
+                    textSize,
+                    'text-muted-foreground/30 select-none text-right min-w-[2ch]'
+                  )}
+                >
+                  {i + 1}
+                </span>
+                <span
+                  className={cn(
+                    textSize,
+                    'whitespace-pre-wrap break-all',
+                    !tokenizedLines && 'text-muted-foreground'
+                  )}
+                >
+                  {tokenizedLines ? (
+                    <HighlightedLine tokens={tokenizedLines[i]?.tokens ?? [{ type: null, content: line || ' ' }]} />
+                  ) : (
+                    line || ' '
+                  )}
+                </span>
               </span>
-              <span
-                className={cn(
-                  textSize,
-                  'whitespace-pre-wrap break-all',
-                  !tokenizedLines && 'text-muted-foreground'
-                )}
-              >
-                {tokenizedLines ? (
-                  <HighlightedLine tokens={tokenizedLines[i]?.tokens ?? [{ type: null, content: line || ' ' }]} />
-                ) : (
-                  line || ' '
-                )}
-              </span>
-            </span>
-          ))}
-        </code>
-      </pre>
+            ))}
+          </code>
+        </pre>
+      </div>
     </div>
   )
 })
