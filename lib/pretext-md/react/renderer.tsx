@@ -38,23 +38,41 @@ type PluginRenderer = (block: MeasuredBlock, renderChild: (b: MeasuredBlock) => 
 const defaultRenderers: Record<string, PluginRenderer> = {
   'code-block': (b) => renderCodeBlock(b.node as CodeBlockNode),
   'blockquote': (b, renderChild) => (
-    <blockquote className="border-l-2 border-muted-foreground/30 pl-4">
+    <blockquote className="relative" style={{ paddingLeft: b.contentLeft ?? 16 }}>
+      {b.quoteRails?.map((x, i) => (
+        <span
+          key={i}
+          className="absolute top-0 bottom-0 w-0.5 bg-muted-foreground/30"
+          style={{ left: x }}
+        />
+      ))}
       {b.children?.map((child, i) => <React.Fragment key={i}>{renderChild(child)}</React.Fragment>)}
     </blockquote>
   ),
   'list': (b) => {
-    const node = b.node as ListNode
-    const Tag = node.ordered ? 'ol' : 'ul'
     return (
-      <Tag className={node.ordered ? 'list-decimal pl-6' : 'list-disc pl-6'} start={node.start}>
+      <div className="relative">
         {b.items?.map((measuredBlocks, i) => (
-          <li key={i}>
-            {measuredBlocks.map((child, j) => (
-              <MeasuredBlockRenderer key={j} block={child} />
-            ))}
-          </li>
+          <div key={i} className="relative" style={i > 0 ? { marginTop: 4 } : undefined}>
+            {measuredBlocks.map((child, j) => {
+              if (child.marker) {
+                return (
+                  <div key={j} className="relative" style={{ paddingLeft: child.contentLeft ?? 0 }}>
+                    <span
+                      className="absolute text-muted-foreground text-sm select-none"
+                      style={{ left: child.marker.x, top: 0, lineHeight: 'inherit' }}
+                    >
+                      {child.marker.text}
+                    </span>
+                    <MeasuredBlockRenderer block={child} />
+                  </div>
+                )
+              }
+              return <MeasuredBlockRenderer key={j} block={child} />
+            })}
+          </div>
         ))}
-      </Tag>
+      </div>
     )
   },
   'youtube': (b) => renderYouTube(b.node as ImageNode),

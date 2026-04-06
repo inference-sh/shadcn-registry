@@ -8,18 +8,20 @@ export type PretextMdConfig = {
   lineHeights: LineHeightConfig
 }
 
+// Font strings use rem so pretext resolves them against the actual root
+// font-size via getComputedStyle. Values match Tailwind default scale.
 const defaultFonts: FontConfig = {
-  body: '14px "DM Sans", sans-serif',
-  bold: 'bold 14px "DM Sans", sans-serif',
-  italic: 'italic 14px "DM Sans", sans-serif',
-  boldItalic: 'bold italic 14px "DM Sans", sans-serif',
-  code: '13px "DM Mono", "Fira Code", monospace',
-  h1: 'bold 24px "DM Sans", sans-serif',
-  h2: 'bold 20px "DM Sans", sans-serif',
-  h3: 'bold 16px "DM Sans", sans-serif',
-  h4: 'bold 14px "DM Sans", sans-serif',
-  h5: 'bold 13px "DM Sans", sans-serif',
-  h6: 'bold 12px "DM Sans", sans-serif',
+  body: '0.875rem "DM Sans", sans-serif',
+  bold: 'bold 0.875rem "DM Sans", sans-serif',
+  italic: 'italic 0.875rem "DM Sans", sans-serif',
+  boldItalic: 'bold italic 0.875rem "DM Sans", sans-serif',
+  code: '0.8125rem "DM Mono", "Fira Code", monospace',
+  h1: 'bold 1.5rem "DM Sans", sans-serif',
+  h2: 'bold 1.25rem "DM Sans", sans-serif',
+  h3: 'bold 1rem "DM Sans", sans-serif',
+  h4: 'bold 0.875rem "DM Sans", sans-serif',
+  h5: 'bold 0.8125rem "DM Sans", sans-serif',
+  h6: 'bold 0.75rem "DM Sans", sans-serif',
 }
 
 const defaultLineHeights: LineHeightConfig = {

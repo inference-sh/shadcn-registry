@@ -100,35 +100,80 @@ export function hrPlugin(): EmbedPlugin {
 
 // --- Blockquote plugin ---
 
-export function blockquotePlugin(indent: number = 20): EmbedPlugin {
+const QUOTE_RAIL_WIDTH = 2     // border-l-2
+const QUOTE_RAIL_GAP = 10      // gap between rail and content
+const QUOTE_INDENT = QUOTE_RAIL_WIDTH + QUOTE_RAIL_GAP
+
+export function blockquotePlugin(): EmbedPlugin {
   return {
     name: 'blockquote',
     match: (node) => node.kind === 'blockquote',
-    measure: () => ({ kind: 'fixed', height: 0 }), // unused — measureBlock handles it
+    measure: () => ({ kind: 'fixed', height: 0 }),
     measureBlock: (node: BlockquoteNode, ctx) => {
-      const innerConfig = { ...ctx.config, maxWidth: ctx.config.maxWidth - indent }
+      // Collect parent rail positions and add our own
+      const parentRails = ctx.config._quoteRails ?? []
+      const railX = (ctx.config._contentLeft ?? 0)
+      const ourRails = [...parentRails, railX]
+      const contentLeft = railX + QUOTE_INDENT
+
+      const innerConfig = {
+        ...ctx.config,
+        maxWidth: ctx.config.maxWidth - QUOTE_INDENT,
+        _quoteRails: ourRails,
+        _contentLeft: contentLeft,
+      }
       const inner = ctx.measureBlocks(node.children, innerConfig)
-      return { node, height: inner.height, y: 0, children: inner.blocks }
+      return {
+        node, height: inner.height, y: 0,
+        children: inner.blocks,
+        quoteRails: ourRails,
+        contentLeft,
+      }
     },
   }
 }
 
 // --- List plugin ---
 
-export function listPlugin(indent: number = 24): EmbedPlugin {
+const LIST_MARKER_GAP = 8      // gap between marker and content
+const LIST_INDENT = 18          // total indent per nesting level
+const LIST_ITEM_GAP = 4         // vertical gap between items
+
+export function listPlugin(): EmbedPlugin {
   return {
     name: 'list',
     match: (node) => node.kind === 'list',
-    measure: () => ({ kind: 'fixed', height: 0 }), // unused — measureBlock handles it
+    measure: () => ({ kind: 'fixed', height: 0 }),
     measureBlock: (node: ListNode, ctx) => {
-      const innerConfig = { ...ctx.config, maxWidth: ctx.config.maxWidth - indent }
+      const baseLeft = ctx.config._contentLeft ?? 0
+      const markerX = baseLeft
+      const contentLeft = baseLeft + LIST_INDENT
+      const innerConfig = {
+        ...ctx.config,
+        maxWidth: ctx.config.maxWidth - LIST_INDENT,
+        _contentLeft: contentLeft,
+      }
+
       let totalHeight = 0
-      const measuredItems = node.items.map(itemBlocks => {
+      const measuredItems = node.items.map((itemBlocks, i) => {
         const inner = ctx.measureBlocks(itemBlocks, innerConfig)
+        if (i > 0) totalHeight += LIST_ITEM_GAP
+        // Tag each item's first block with marker info
+        if (inner.blocks.length > 0) {
+          const markerText = node.ordered
+            ? `${(node.start ?? 1) + i}.`
+            : '•'
+          inner.blocks[0] = {
+            ...inner.blocks[0]!,
+            marker: { text: markerText, x: markerX },
+            contentLeft,
+          }
+        }
         totalHeight += inner.height
         return inner.blocks
       })
-      return { node, height: totalHeight, y: 0, items: measuredItems }
+
+      return { node, height: totalHeight, y: 0, items: measuredItems, contentLeft }
     },
   }
 }

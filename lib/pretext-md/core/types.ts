@@ -33,6 +33,9 @@ export type MeasureConfig = {
   fonts: FontConfig
   lineHeights: LineHeightConfig
   plugins?: EmbedPlugin[]
+  // Internal — used by container plugins to thread nesting state
+  _quoteRails?: number[]
+  _contentLeft?: number
 }
 
 // --- Block-level nodes (parser output) ---
@@ -136,6 +139,10 @@ export type MeasuredBlock = {
   lines?: MeasuredLine[]          // for paragraph/heading/code blocks
   children?: MeasuredBlock[]      // for blockquote inner blocks
   items?: MeasuredBlock[][]       // for list items (each item = array of measured blocks)
+  // Marker/rail positioning — measured coordinates for precise rendering
+  marker?: { text: string; x: number }       // list bullet/number position
+  quoteRails?: number[]                       // blockquote rail x-positions (one per nesting level)
+  contentLeft?: number                        // x-offset where content starts (after markers/rails)
 }
 
 export type MeasuredLine = {

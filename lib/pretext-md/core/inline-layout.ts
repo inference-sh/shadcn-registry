@@ -190,141 +190,174 @@ export function layoutInline(
   const prepared = flattenAndPrepare(items, fonts)
   if (prepared.length === 0) return []
 
-  const lines = layoutPreparedItems(prepared, maxWidth)
-  return lines.map((line, i) => ({
-    fragments: line.fragments,
-    width: line.width,
-    y: i * lineHeight,
-  }))
+  const lineRanges = layoutLineRanges(prepared, maxWidth)
+  return lineRanges.map((range, i) => {
+    const line: MeasuredLine = {
+      fragments: null!,
+      width: range.width,
+      y: i * lineHeight,
+    }
+    // Lazy: fragments are materialized on first access.
+    // Offscreen lines never pay the string allocation cost.
+    let cached: LineFragment[] | null = null
+    Object.defineProperty(line, 'fragments', {
+      get() {
+        if (cached === null) cached = materializeRange(prepared, range)
+        return cached
+      },
+      enumerable: true,
+    })
+    return line
+  })
 }
 
-type RawLine = {
-  fragments: LineFragment[]
+// --- Line range types (lazy materialization) ---
+// The layout pass produces ranges (cursor positions + widths) without
+// allocating fragment text. Materialization runs only for visible lines.
+
+type FragmentRange = {
+  itemIndex: number       // index into prepared items array
+  startCursor: LayoutCursor | null  // null = whole item (fast path)
+  endCursor: LayoutCursor
+  width: number
+  leadingGap: number
+  availableWidth: number  // text width offered during layout (for re-layout during materialization)
+}
+
+type LineRange = {
+  fragmentRanges: FragmentRange[]
   width: number
 }
 
-function layoutPreparedItems(items: PreparedItem[], maxWidth: number): RawLine[] {
-  const lines: RawLine[] = []
+function layoutLineRanges(items: PreparedItem[], maxWidth: number): LineRange[] {
+  const lines: LineRange[] = []
   const safeWidth = Math.max(1, maxWidth)
 
-  let itemIndex = 0
+  let itemIdx = 0
   let textCursor: LayoutCursor | null = null
 
-  while (itemIndex < items.length) {
-    const item = items[itemIndex]!
+  while (itemIdx < items.length) {
+    const item = items[itemIdx]!
 
-    // Handle hard breaks
     if (item.kind === 'break') {
-      lines.push({ fragments: [], width: 0 })
-      itemIndex++
+      lines.push({ fragmentRanges: [], width: 0 })
+      itemIdx++
       textCursor = null
       continue
     }
 
-    const fragments: LineFragment[] = []
+    const ranges: FragmentRange[] = []
     let lineWidth = 0
     let remainingWidth = safeWidth
 
     lineLoop:
-    while (itemIndex < items.length) {
-      const item = items[itemIndex]!
+    while (itemIdx < items.length) {
+      const item = items[itemIdx]!
       if (item.kind === 'break') break lineLoop
 
-      // Skip exhausted items
       if (textCursor !== null && cursorsMatch(textCursor, item.endCursor)) {
-        itemIndex++
+        itemIdx++
         textCursor = null
         continue
       }
 
-      const leadingGap = fragments.length === 0 ? 0 : item.leadingGap
+      const leadingGap = ranges.length === 0 ? 0 : item.leadingGap
       const reservedWidth = leadingGap + item.chromeWidth
 
-      // Can't even fit the chrome on this line
-      if (fragments.length > 0 && reservedWidth >= remainingWidth) break lineLoop
+      if (ranges.length > 0 && reservedWidth >= remainingWidth) break lineLoop
 
-      // Fast path: entire item fits on this line
+      // Fast path: entire item fits
       if (textCursor === null) {
         const fullWidth = leadingGap + item.fullWidth + item.chromeWidth
         if (fullWidth <= remainingWidth) {
-          fragments.push({
-            text: item.fullText,
+          ranges.push({
+            itemIndex: itemIdx,
+            startCursor: null, // null = whole item
+            endCursor: item.endCursor,
             width: item.fullWidth + item.chromeWidth,
-            font: item.font,
-            fontStyle: item.fontStyle,
-            href: item.href,
-            isCode: item.isCode,
-            isStrikethrough: item.isStrikethrough,
             leadingGap,
+            availableWidth: UNBOUNDED,
           })
           lineWidth += fullWidth
           remainingWidth = Math.max(0, safeWidth - lineWidth)
-          itemIndex++
+          itemIdx++
           continue
         }
       }
 
-      // Slow path: need to break this item
+      // Slow path: break item
       const startCursor = textCursor ?? LINE_START
       const availableWidth = Math.max(1, remainingWidth - reservedWidth)
       const line = layoutNextLine(item.prepared, startCursor, availableWidth)
 
-      if (line === null) {
-        itemIndex++
-        textCursor = null
-        continue
-      }
+      if (line === null) { itemIdx++; textCursor = null; continue }
       if (cursorsMatch(startCursor, line.end)) {
-        if (fragments.length > 0) break lineLoop
-        itemIndex++
-        textCursor = null
-        continue
+        if (ranges.length > 0) break lineLoop
+        itemIdx++; textCursor = null; continue
       }
 
-      // Guard against character-level word breaking only.
-      // graphemeIndex > 0 means pretext broke mid-word (character level).
-      // graphemeIndex === 0 means it broke at a word/segment boundary — that's fine.
-      if (fragments.length > 0 && line.end.graphemeIndex > 0) {
+      // Guard against mid-word breaking when not first on line
+      if (ranges.length > 0 && line.end.graphemeIndex > 0) {
         const fullLine = layoutNextLine(item.prepared, startCursor, safeWidth - item.chromeWidth)
         if (fullLine && !cursorsMatch(line.end, fullLine.end)) {
           break lineLoop
         }
       }
 
-      fragments.push({
-        text: line.text,
+      ranges.push({
+        itemIndex: itemIdx,
+        startCursor,
+        endCursor: line.end,
         width: line.width + item.chromeWidth,
-        font: item.font,
-        fontStyle: item.fontStyle,
-        href: item.href,
-        isCode: item.isCode,
-        isStrikethrough: item.isStrikethrough,
         leadingGap,
+        availableWidth,
       })
       lineWidth += leadingGap + line.width + item.chromeWidth
       remainingWidth = Math.max(0, safeWidth - lineWidth)
 
       if (cursorsMatch(line.end, item.endCursor)) {
-        // Item fully consumed
-        itemIndex++
-        textCursor = null
-        continue
+        itemIdx++; textCursor = null; continue
       }
-
-      // Item continues on next line
       textCursor = line.end
       break lineLoop
     }
 
-    if (fragments.length === 0) break
-    lines.push({ fragments, width: lineWidth })
+    if (ranges.length === 0) break
+    lines.push({ fragmentRanges: ranges, width: lineWidth })
   }
 
   return lines
 }
 
+// Materialize a single line range into actual fragment objects.
+// Called lazily — only when the renderer accesses .fragments on a visible line.
+function materializeRange(items: PreparedItem[], range: LineRange): LineFragment[] {
+  return range.fragmentRanges.map(fr => {
+    const item = items[fr.itemIndex]! as PreparedTextItem
+    let text: string
+    if (fr.startCursor === null) {
+      // Fast path: whole item was placed intact
+      text = item.fullText
+    } else {
+      // Partial item: re-layout at the same available width to reproduce the break
+      const line = layoutNextLine(item.prepared, fr.startCursor, fr.availableWidth)
+      text = line?.text ?? ''
+    }
+    return {
+      text,
+      width: fr.width,
+      font: item.font,
+      fontStyle: item.fontStyle,
+      href: item.href,
+      isCode: item.isCode,
+      isStrikethrough: item.isStrikethrough,
+      leadingGap: fr.leadingGap,
+    }
+  })
+}
+
 /**
- * Quick line count — same algorithm, no fragment allocation.
+ * Quick line count — same range algorithm, no materialization.
  */
 export function countInlineLines(
   items: InlineItem[],
@@ -333,5 +366,5 @@ export function countInlineLines(
 ): number {
   const prepared = flattenAndPrepare(items, fonts)
   if (prepared.length === 0) return 0
-  return layoutPreparedItems(prepared, maxWidth).length
+  return layoutLineRanges(prepared, maxWidth).length
 }

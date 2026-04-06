@@ -20,9 +20,10 @@ export function shrinkwrap(
   const blocks = parse(markdown)
   const initial = measureBlocks(blocks, config)
 
+  // Single-line text: no shrinkwrap needed. Any narrower width risks
+  // wrapping to 2 lines due to canvas/DOM measurement differences.
   if (initial.lineCount <= 1) {
-    const maxFragWidth = getMaxContentWidth(initial)
-    return { width: maxFragWidth, height: initial.height }
+    return { width: Math.ceil(config.maxWidth), height: initial.height }
   }
 
   // Reuse a single config object, mutating maxWidth per iteration

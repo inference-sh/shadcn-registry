@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@chenglou/pretext':
-        specifier: ^0.0.3
-        version: 0.0.3
+        specifier: github:okaris/pretext#feat/resolve-relative-font-units
+        version: https://codeload.github.com/okaris/pretext/tar.gz/66f926dc90c8185f534a58d18d0bba82d9ea74cf
       '@inferencesh/sdk':
         specifier: ^0.5.13
         version: 0.5.13(express@5.2.1)(hono@4.11.5)(next@16.1.4(@babel/core@7.28.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
@@ -272,8 +272,9 @@ packages:
     resolution: {integrity: sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg==}
     engines: {node: '>=6.9.0'}
 
-  '@chenglou/pretext@0.0.3':
-    resolution: {integrity: sha512-RQmqMqUAPRCyv4R3LlRi/ao6KbNWYclqLA+V1HS7sWgyUUbjn3JmmlfXZSY/BjM4rbmIaMSyIVisYocYGYftiQ==}
+  '@chenglou/pretext@https://codeload.github.com/okaris/pretext/tar.gz/66f926dc90c8185f534a58d18d0bba82d9ea74cf':
+    resolution: {tarball: https://codeload.github.com/okaris/pretext/tar.gz/66f926dc90c8185f534a58d18d0bba82d9ea74cf}
+    version: 0.0.4
 
   '@dotenvx/dotenvx@1.52.0':
     resolution: {integrity: sha512-CaQcc8JvtzQhUSm9877b6V4Tb7HCotkcyud9X2YwdqtQKwgljkMRwU96fVYKnzN3V0Hj74oP7Es+vZ0mS+Aa1w==}
@@ -4011,7 +4012,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@chenglou/pretext@0.0.3': {}
+  '@chenglou/pretext@https://codeload.github.com/okaris/pretext/tar.gz/66f926dc90c8185f534a58d18d0bba82d9ea74cf': {}
 
   '@dotenvx/dotenvx@1.52.0':
     dependencies:

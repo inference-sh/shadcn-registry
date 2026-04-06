@@ -21,7 +21,7 @@
     "registry:build": "shadcn build"
   },
   "dependencies": {
-    "@chenglou/pretext": "^0.0.3",
+    "@chenglou/pretext": "github:okaris/pretext#feat/resolve-relative-font-units",
     "@inferencesh/sdk": "^0.5.13",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-collapsible": "^1.1.12",
