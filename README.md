@@ -49,7 +49,7 @@ pnpm registry:build
 - [documentation](https://inference.sh/docs) — getting started guides
 - [registry](https://ui.inference.sh) — browse all components
 - [blog](https://inference.sh/blog) — tutorials and guides
-- [app store](https://app.inference.sh) — 150+ ai models
+- [app store](https://app.inference.sh) — 250+ ai models
 - [discord](https://discord.gg/RM77SWSbyT) — community
 - [github](https://github.com/inference-sh) — source code
 
