@@ -294,7 +294,9 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
             <AlertCircle className="h-3 w-3 shrink-0" />
             <span className="line-clamp-1">failed to send: {error}</span>
             <button
+              type="button"
               onClick={clearError}
+              aria-label="Dismiss error"
               className="shrink-0 rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
             >
               <X className="h-3 w-3" />
