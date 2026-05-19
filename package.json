@@ -53,6 +53,9 @@
     "unified": "^11.0.5",
     "zod": "^3.25.76"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["msw", "sharp", "unrs-resolver"]
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.11",
