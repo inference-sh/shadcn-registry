@@ -151,9 +151,11 @@ export const TaskLogs = memo(function TaskLogs({ task, className }: TaskLogsProp
               <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild>
                   <button
+                    disabled
+                    aria-disabled="true"
                     className={cn(
                       'px-4 py-2 text-sm font-medium whitespace-nowrap',
-                      'hover:bg-muted/50 text-muted-foreground cursor-not-allowed',
+                      'text-muted-foreground cursor-not-allowed',
                       selectedTab === key && 'border-b-2 border-primary'
                     )}
                   >
