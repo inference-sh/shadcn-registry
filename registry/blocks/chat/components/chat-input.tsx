@@ -428,6 +428,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
                   {examplePrompts.map((prompt, i) => (
                     <button
                       key={i}
+                      type="button"
                       onClick={() => {
                         setValue(prompt);
                         textareaRef.current?.focus();
