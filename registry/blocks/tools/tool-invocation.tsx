@@ -118,13 +118,11 @@ const FinishBlock = memo(function FinishBlock({
         </div>
         <div className={cn("flex-1 h-px", getLineColor())} />
       </div>
-      <div className=" border border-border rounded-md p-4 bg-card w-fit max-w-full">
-        {resultMessage && (
+      {resultMessage && (
+        <div className="border border-border rounded-md p-4 bg-card w-fit max-w-full">
           <Markdown content={resultMessage} />
-        )}
-
-
-      </div>
+        </div>
+      )}
     </div>
   )
 })
