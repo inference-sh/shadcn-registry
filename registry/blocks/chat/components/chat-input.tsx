@@ -295,6 +295,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
             <span className="line-clamp-1">failed to send: {error}</span>
             <button
               onClick={clearError}
+              aria-label="Dismiss error"
               className="shrink-0 rounded-full p-0.5 hover:bg-destructive/20 transition-colors"
             >
               <X className="h-3 w-3" />
@@ -365,6 +366,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={placeholder}
+          aria-label={placeholder}
           rows={1}
           className={cn(
             'w-full resize-none bg-transparent text-sm',
