@@ -448,16 +448,12 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row">
-            <Button asChild size="lg" className="gap-2">
-              <Link href="/blocks/agent">
-                try it
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+            <Button size="lg" className="gap-2" render={<Link href="/blocks/agent" />}>
+              try it
+              <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link href="https://github.com/inference-sh/shadcn-registry" target="_blank" rel="noopener noreferrer">
-                github
-              </Link>
+            <Button variant="outline" size="lg" render={<Link href="https://github.com/inference-sh/shadcn-registry" target="_blank" rel="noopener noreferrer" />}>
+              github
             </Button>
           </div>
 

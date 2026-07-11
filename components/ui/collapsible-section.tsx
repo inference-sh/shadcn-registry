@@ -36,15 +36,13 @@ export const CollapsibleSection = memo(function CollapsibleSection({
         className="group w-full text-muted-foreground"
       >
         <div className="flex items-center px-0 py-0.5">
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground cursor-pointer">
-              {icon}
-              <span className={cn('lowercase', isActive && 'animate-pulse')}>
-                {label}
-              </span>
-              {!open && preview}
-              {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-            </button>
+          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground cursor-pointer">
+            {icon}
+            <span className={cn('lowercase', isActive && 'animate-pulse')}>
+              {label}
+            </span>
+            {!open && preview}
+            {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </CollapsibleTrigger>
         </div>
         <CollapsibleContent

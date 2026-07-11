@@ -330,9 +330,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
       <div className="relative">
         <Popover open={showCommandMenu} onOpenChange={setShowCommandMenu}>
           {/* Hidden trigger for popover positioning */}
-          <PopoverTrigger asChild>
-            <div className="w-0 h-0 absolute" />
-          </PopoverTrigger>
+          <PopoverTrigger render={<div className="w-0 h-0 absolute" />} />
           <PopoverContent className="p-0 w-64" align="start" side="top" sideOffset={8}>
             <Command className="rounded-lg border-none">
               <CommandInput placeholder="search files..." />
@@ -411,17 +409,19 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
           )}
           {examplePrompts && examplePrompts.length > 0 && (
             <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                  disabled={isBusy}
-                  aria-label="Example prompts"
-                >
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
+              <PopoverTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                    disabled={isBusy}
+                    aria-label="Example prompts"
+                  />
+                }
+              >
+                <HelpCircle className="h-4 w-4" />
               </PopoverTrigger>
               <PopoverContent className="p-1 w-72" align="start" side="top" sideOffset={8}>
                 <div className="flex flex-col">

@@ -44,15 +44,19 @@ export function SiteHeader() {
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <nav className="flex items-center">
-            <Button variant="ghost" size="icon" asChild>
-              <Link
-                href="https://github.com/inference-sh/shadcn-registry"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="h-4 w-4" />
-                <span className="sr-only">GitHub</span>
-              </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              render={
+                <Link
+                  href="https://github.com/inference-sh/shadcn-registry"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              <Github className="h-4 w-4" />
+              <span className="sr-only">GitHub</span>
             </Button>
             <ModeToggle />
           </nav>

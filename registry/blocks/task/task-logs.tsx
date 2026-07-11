@@ -147,20 +147,22 @@ export const TaskLogs = memo(function TaskLogs({ task, className }: TaskLogsProp
       <div className="flex overflow-x-auto border-b">
         {LOG_TYPES.map(({ key, title }) =>
           !logs[key] ? (
-            <TooltipProvider key={key}>
-              <Tooltip delayDuration={100}>
-                <TooltipTrigger asChild>
-                  <button
-                    disabled
-                    aria-disabled="true"
-                    className={cn(
-                      'px-4 py-2 text-sm font-medium whitespace-nowrap',
-                      'text-muted-foreground cursor-not-allowed',
-                      selectedTab === key && 'border-b-2 border-primary'
-                    )}
-                  >
-                    {title}
-                  </button>
+            <TooltipProvider key={key} delay={100}>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      disabled
+                      aria-disabled="true"
+                      className={cn(
+                        'px-4 py-2 text-sm font-medium whitespace-nowrap',
+                        'text-muted-foreground cursor-not-allowed',
+                        selectedTab === key && 'border-b-2 border-primary'
+                      )}
+                    />
+                  }
+                >
+                  {title}
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>n/a</p>
@@ -186,20 +188,22 @@ export const TaskLogs = memo(function TaskLogs({ task, className }: TaskLogsProp
         <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleCopy}
-                  aria-label="Copy logs"
-                  disabled={logs[selectedTab] === undefined}
-                >
-                  {copied ? (
-                    <Check className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
+              <TooltipTrigger
+                render={
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleCopy}
+                    aria-label="Copy logs"
+                    disabled={logs[selectedTab] === undefined}
+                  />
+                }
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </TooltipTrigger>
               <TooltipContent>
                 <span>{copied ? 'copied!' : 'copy logs'}</span>
@@ -266,14 +270,14 @@ export const SimpleLogs = memo(function SimpleLogs({
         <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="icon" variant="ghost" onClick={handleCopy} aria-label="Copy logs">
-                  {copied ? (
-                    <Check className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
+              <TooltipTrigger
+                render={<Button size="icon" variant="ghost" onClick={handleCopy} aria-label="Copy logs" />}
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </TooltipTrigger>
               <TooltipContent>
                 <span>{copied ? 'copied!' : 'copy logs'}</span>

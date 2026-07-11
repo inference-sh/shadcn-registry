@@ -298,7 +298,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
           placeholder={node.placeholder}
           value={(node.name ? formData[node.name] as string : node.defaultValue) ?? node.defaultValue ?? ""}
           onChange={(e) => node.name && setFormValue(node.name, e.target.value)}
-          disabled={isDisabled || node.disabled}
+          disabled={isDisabled || !!node.disabled}
           required={node.required}
           className="w-full"
         />
@@ -311,7 +311,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
           placeholder={node.placeholder}
           value={(node.name ? formData[node.name] as string : node.defaultValue) ?? node.defaultValue ?? ""}
           onChange={(e) => node.name && setFormValue(node.name, e.target.value)}
-          disabled={isDisabled || node.disabled}
+          disabled={isDisabled || !!node.disabled}
           required={node.required}
           rows={node.rows || 3}
           className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -322,8 +322,8 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
       return (
         <Select
           value={node.name ? (formData[node.name] as string | undefined) : undefined}
-          onValueChange={(value) => node.name && setFormValue(node.name, value)}
-          disabled={isDisabled || node.disabled}
+          onValueChange={(value) => node.name && setFormValue(node.name, value ?? "")}
+          disabled={isDisabled || !!node.disabled}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder={node.placeholder ?? "Select..."} />
@@ -346,7 +346,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
           <Checkbox
             id={checkboxId}
             checked={isChecked}
-            disabled={isDisabled || node.disabled}
+            disabled={isDisabled || !!node.disabled}
             onCheckedChange={(checked) => node.name && setFormValue(node.name, !!checked)}
           />
           <Label htmlFor={checkboxId} className={cn("text-sm", (isDisabled || node.disabled) ? "cursor-default" : "cursor-pointer")}>
@@ -374,7 +374,7 @@ const NodeRenderer = React.memo(({ node }: { node: WidgetNode }) => {
                   value={opt.value}
                   checked={radioValue === opt.value}
                   onChange={() => node.name && setFormValue(node.name, opt.value)}
-                  disabled={isDisabled || node.disabled}
+                  disabled={isDisabled || !!node.disabled}
                   className="h-4 w-4 border-border text-primary focus:ring-ring"
                 />
                 <Label htmlFor={radioId} className="text-sm">{opt.label}</Label>
