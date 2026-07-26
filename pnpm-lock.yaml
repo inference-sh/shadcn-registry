@@ -15,8 +15,8 @@ importers:
         specifier: github:okaris/pretext#feat/resolve-relative-font-units
         version: https://codeload.github.com/okaris/pretext/tar.gz/66f926dc90c8185f534a58d18d0bba82d9ea74cf
       '@inferencesh/sdk':
-        specifier: ^0.5.13
-        version: 0.5.13(express@5.2.1(supports-color@7.2.0))(hono@4.11.5)(next@16.2.6(@babel/core@7.28.6(supports-color@7.2.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        specifier: ^0.6.15
+        version: 0.6.15(express@5.2.1(supports-color@7.2.0))(hono@4.11.5)(next@16.2.6(@babel/core@7.28.6(supports-color@7.2.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-checkbox':
         specifier: ^1.3.3
         version: 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -572,8 +572,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@inferencesh/sdk@0.5.13':
-    resolution: {integrity: sha512-LC4ySglUnhkK84zKZlatbU9VjUkk+c1hgqyyuj5dMmyCEZCP5EQVLfr/9gLBDVRuFSLzNEmyGpHHblxEGVdIng==}
+  '@inferencesh/sdk@0.6.15':
+    resolution: {integrity: sha512-/5CtmeXWyntppCwtLENYXHMVoHL1Cb67VG/hBBHWGi9HD8KsfsXQ8CsE7nok6PqHunjaCNfMc4Pr1+1rVxjdwA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       '@sveltejs/kit': '>=2.0.0'
@@ -4358,7 +4358,7 @@ snapshots:
   '@img/sharp-win32-x64@0.34.5':
     optional: true
 
-  '@inferencesh/sdk@0.5.13(express@5.2.1(supports-color@7.2.0))(hono@4.11.5)(next@16.2.6(@babel/core@7.28.6(supports-color@7.2.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
+  '@inferencesh/sdk@0.6.15(express@5.2.1(supports-color@7.2.0))(hono@4.11.5)(next@16.2.6(@babel/core@7.28.6(supports-color@7.2.0))(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
     dependencies:
       eventsource: 4.1.0
     optionalDependencies:
