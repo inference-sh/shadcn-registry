@@ -113,13 +113,16 @@ type MarkdownProps = {
 }
 
 /**
- * Width actually available to a child of `parent`.
+ * Content-box width of `parent` — the width actually available to its children.
  *
  * clientWidth includes the parent's padding, so measuring with it lays text out
  * wider than the box it renders into — the excess spills past the border, and
  * because measured lines are white-space:nowrap they overflow instead of
- * wrapping. The error is a constant (the horizontal padding), so it gets
- * proportionally worse the narrower the container is.
+ * wrapping.
+ *
+ * Mount-time only: once per instance, before ResizeObserver has fired, so we
+ * have a width for the first paint. After that contentRect gives the same
+ * number for free — see the observer below.
  */
 function parentContentWidth(parent: HTMLElement): number {
   const cs = getComputedStyle(parent)
@@ -158,11 +161,13 @@ export const Markdown = memo(function Markdown({
   useEffect(() => {
     const parent = containerRef.current?.parentElement
     if (!parent || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => {
-      // Same helper as the initial measure — one formula, so the two paths
-      // can't drift. (entry.contentRect would give the same number, but having
-      // two ways to compute it is how they end up disagreeing.)
-      const w = parentContentWidth(parent)
+    // Exactly one observed element, so exactly one entry per callback.
+    const ro = new ResizeObserver(([entry]) => {
+      // contentRect IS the content box — the same number parentContentWidth()
+      // derives, but the browser already computed it for this callback.
+      // getComputedStyle() here would force a style resolution per observer
+      // per tick, i.e. once per visible item on every frame of a resize drag.
+      const w = Math.floor(entry.contentRect.width)
       setContainerWidth(prev => Math.abs(prev - w) > 1 ? w : prev)
     })
     ro.observe(parent)
