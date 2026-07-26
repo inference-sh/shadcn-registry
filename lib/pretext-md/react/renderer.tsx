@@ -112,6 +112,21 @@ type MarkdownProps = {
   renderers?: Record<string, PluginRenderer>
 }
 
+/**
+ * Width actually available to a child of `parent`.
+ *
+ * clientWidth includes the parent's padding, so measuring with it lays text out
+ * wider than the box it renders into — the excess spills past the border, and
+ * because measured lines are white-space:nowrap they overflow instead of
+ * wrapping. The error is a constant (the horizontal padding), so it gets
+ * proportionally worse the narrower the container is.
+ */
+function parentContentWidth(parent: HTMLElement): number {
+  const cs = getComputedStyle(parent)
+  const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)
+  return Math.floor(parent.clientWidth - padX)
+}
+
 export const Markdown = memo(function Markdown({
   content,
   className,
@@ -135,7 +150,7 @@ export const Markdown = memo(function Markdown({
   useLayoutEffect(() => {
     const parent = containerRef.current?.parentElement
     if (parent) {
-      const w = Math.floor(parent.clientWidth)
+      const w = parentContentWidth(parent)
       if (w > 0) setContainerWidth(w)
     }
   }, [])
@@ -144,7 +159,10 @@ export const Markdown = memo(function Markdown({
     const parent = containerRef.current?.parentElement
     if (!parent || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(() => {
-      const w = Math.floor(parent.clientWidth)
+      // Same helper as the initial measure — one formula, so the two paths
+      // can't drift. (entry.contentRect would give the same number, but having
+      // two ways to compute it is how they end up disagreeing.)
+      const w = parentContentWidth(parent)
       setContainerWidth(prev => Math.abs(prev - w) > 1 ? w : prev)
     })
     ro.observe(parent)
