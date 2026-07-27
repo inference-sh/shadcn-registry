@@ -152,8 +152,14 @@ export const TaskLogs = memo(function TaskLogs({ task, className }: TaskLogsProp
                 <TooltipTrigger
                   render={
                     <button
-                      disabled
+                      type="button"
+                      // aria-disabled + tabIndex rather than the native
+                      // `disabled` attribute: a disabled form control fires no
+                      // pointer events in Chrome/Firefox, so the tooltip that
+                      // explains *why* the tab is unavailable would never open.
+                      // No onClick is bound here, so it is inert either way.
                       aria-disabled="true"
+                      tabIndex={-1}
                       className={cn(
                         'px-4 py-2 text-sm font-medium whitespace-nowrap',
                         'text-muted-foreground cursor-not-allowed',
