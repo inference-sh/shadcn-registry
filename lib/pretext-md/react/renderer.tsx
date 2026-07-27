@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, memo, useState, useRef, useEffect, useLayoutEffect, createContext, useContext } from 'react'
+import React, { useMemo, memo, useState, useRef, useLayoutEffect, createContext, useContext } from 'react'
 import { parse } from '../core/parser'
 import { measureBlocks } from '../core/block-layout'
 import type {
@@ -106,6 +106,8 @@ function findPluginForNode(
 
 type MarkdownProps = {
   content: string
+  /** Fixed width for measurement. If omitted, auto-measures the container. */
+  maxWidth?: number
   className?: string
   measured?: boolean
   plugins?: EmbedPlugin[]
@@ -113,25 +115,23 @@ type MarkdownProps = {
 }
 
 /**
- * Content-box width of `parent` — the width actually available to its children.
+ * Content-box width of `el` — the width available to lay text into.
  *
- * clientWidth includes the parent's padding, so measuring with it lays text out
- * wider than the box it renders into — the excess spills past the border, and
- * because measured lines are white-space:nowrap they overflow instead of
- * wrapping.
- *
- * Mount-time only: once per instance, before ResizeObserver has fired, so we
- * have a width for the first paint. After that contentRect gives the same
- * number for free — see the observer below.
+ * clientWidth includes padding. The container sets none itself and no current
+ * caller passes a padded `className`, so this subtraction is insurance rather
+ * than a live fix — but it is the exact mistake that made text overflow when
+ * this measured its `p-4` parent instead, so it stays. Mount-time only: the
+ * observer below reads contentRect, which already excludes padding.
  */
-function parentContentWidth(parent: HTMLElement): number {
-  const cs = getComputedStyle(parent)
+export function contentBoxWidth(el: HTMLElement): number {
+  const cs = getComputedStyle(el)
   const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)
-  return Math.floor(parent.clientWidth - padX)
+  return Math.floor(el.clientWidth - padX)
 }
 
 export const Markdown = memo(function Markdown({
   content,
+  maxWidth: maxWidthProp,
   className,
   measured = true,
   plugins: userPlugins,
@@ -146,46 +146,69 @@ export const Markdown = memo(function Markdown({
 
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
+  const lastWidth = useRef(0)
 
-  // Measure the parent's width, not our own container.
-  // Measured lines use white-space:nowrap which prevents the container from
-  // shrinking below content width — reading our own width would be circular.
+  // Only whether a width was supplied matters, not its value — depending on
+  // the number would tear down and rebuild the observer on every change.
+  const auto = maxWidthProp === undefined
+
+  // Measure our own container. Not circular: width:100% is set inline below,
+  // and an inline style beats any class rule, so the box is always sized by
+  // its parent and never by its own nowrap content. Verified against a
+  // parent-measuring variant at ui.inference.sh/lab/measure — identical at
+  // every width, in both fixed-width and w-fit parents.
+  //
+  // If text ever stops reflowing as the box shrinks, that invariant broke:
+  // the inline width:100% was removed. Restore it, or fall back to measuring
+  // `el.parentElement` — a box we do not size, so it cannot be circular
+  // (contentBoxWidth already subtracts the padding that requires).
   useLayoutEffect(() => {
-    const parent = containerRef.current?.parentElement
-    if (parent) {
-      const w = parentContentWidth(parent)
-      if (w > 0) setContainerWidth(w)
-    }
-  }, [])
+    const el = containerRef.current
+    if (!auto || !el) return
 
-  useEffect(() => {
-    const parent = containerRef.current?.parentElement
-    if (!parent || typeof ResizeObserver === 'undefined') return
+    // Sync read so the first paint has a width; the observer's initial
+    // callback fires asynchronously.
+    const initial = contentBoxWidth(el)
+    if (initial > 0) {
+      lastWidth.current = initial
+      setContainerWidth(initial)
+    }
+
+    if (typeof ResizeObserver === 'undefined') return
     // Exactly one observed element, so exactly one entry per callback.
     const ro = new ResizeObserver(([entry]) => {
-      // contentRect IS the content box — the same number parentContentWidth()
-      // derives, but the browser already computed it for this callback.
-      // getComputedStyle() here would force a style resolution per observer
-      // per tick, i.e. once per visible item on every frame of a resize drag.
+      // contentRect is the content box the browser already computed for this
+      // callback; getComputedStyle() here would force a style resolution per
+      // instance on every frame of a resize drag.
+      //
+      // We observe ourselves, so this also fires on every height change — i.e.
+      // on every streamed token. Compare against a ref so height-only ticks
+      // never reach React.
       const w = Math.floor(entry.contentRect.width)
-      setContainerWidth(prev => Math.abs(prev - w) > 1 ? w : prev)
+      if (Math.abs(lastWidth.current - w) <= 1) return
+      lastWidth.current = w
+      setContainerWidth(w)
     })
-    ro.observe(parent)
+    ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [auto])
 
   const blocks = useMemo(() => content ? parse(content) : [], [content])
 
+  // An explicit maxWidth skips measurement entirely — useful for fixed layouts
+  // and for deterministic tests that must not depend on live layout.
+  const effectiveWidth = maxWidthProp ?? containerWidth
+
   const measuredResult = useMemo(() => {
-    if (!measured || containerWidth <= 0 || blocks.length === 0) return null
+    if (!measured || effectiveWidth <= 0 || blocks.length === 0) return null
     const measureConfig: MeasureConfig = {
-      maxWidth: containerWidth,
+      maxWidth: effectiveWidth,
       fonts: config.fonts,
       lineHeights: config.lineHeights,
       plugins,
     }
     return measureBlocks(blocks, measureConfig)
-  }, [blocks, containerWidth, config.fonts, config.lineHeights, measured, plugins])
+  }, [blocks, effectiveWidth, config.fonts, config.lineHeights, measured, plugins])
 
   const ctx = { plugins, renderers }
 
@@ -193,7 +216,11 @@ export const Markdown = memo(function Markdown({
   // Content inside is gated on width + content availability.
   return (
     <PluginsContext.Provider value={ctx}>
-      <div ref={containerRef} className={className} style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+      <div
+        ref={containerRef}
+        className={className}
+        style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}
+      >
         {measuredResult ? (
           measuredResult.blocks.map((block, i) => (
             <MeasuredBlockRenderer key={i} block={block} />
