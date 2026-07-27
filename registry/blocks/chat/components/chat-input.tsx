@@ -329,8 +329,12 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
       {/* Text area with @ file reference popover */}
       <div className="relative">
         <Popover open={showCommandMenu} onOpenChange={setShowCommandMenu}>
-          {/* Hidden trigger for popover positioning */}
-          <PopoverTrigger render={<div className="w-0 h-0 absolute" />} />
+          {/* Positioning anchor only — the popover is opened by typing '@' in
+              the textarea, never by clicking this. nativeButton={false} tells
+              Base UI not to expect a native <button>, which it warns about
+              otherwise; a real button would be wrong here since there is
+              nothing to activate. */}
+          <PopoverTrigger nativeButton={false} render={<div className="w-0 h-0 absolute" />} />
           <PopoverContent className="p-0 w-64" align="start" side="top" sideOffset={8}>
             <Command className="rounded-lg border-none">
               <CommandInput placeholder="search files..." />
