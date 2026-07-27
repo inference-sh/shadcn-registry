@@ -22,7 +22,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN corepack enable && pnpm run build
+# Regenerate the registry from source before building the site.
+#
+# public/r/*.json is build output served to `shadcn add` consumers. It is
+# committed, so without this step it only updates when someone remembers to run
+# `pnpm registry:build` by hand — and nobody did between 2026-04-06 and
+# 2026-07-27, leaving the public registry four months behind its own source.
+# Generating it here means the served registry always matches the deployed code.
+RUN corepack enable && pnpm run registry:build && pnpm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
