@@ -3,4 +3,17 @@ image: inference-sh-shadcn-registry
 # registry: hub.inference.sh  # disabled: infra images should not be pushed to public registry
 stack: inference-shadcn-registry
 service: inference-shadcn-registry_web
+# Built from this directory alone — NOT from the js/ workspace root like
+# app/ and web/ are. This repo is public and must stay installable on its own,
+# so the Docker build copies only package.json + pnpm-lock.yaml and installs
+# standalone with no sibling packages present.
+#
+# Consequences, all deliberate:
+#   - @inferencesh/sdk stays a semver range here, never workspace:*. The
+#     container has no workspace to resolve it against, so workspace:* would
+#     fail `pnpm i --frozen-lockfile` outright.
+#   - pnpm-lock.yaml in this repo is load-bearing (the frozen lockfile used by
+#     that install), unlike the vestigial ones elsewhere in the monorepo.
+#   - pnpm-workspace.yaml here is `packages: []` — an explicit "I am my own
+#     root", which is what keeps a local `pnpm install` matching the container.
 build_context: .
