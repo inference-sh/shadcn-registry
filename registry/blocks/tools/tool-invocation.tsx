@@ -27,6 +27,7 @@ import { useAgentActions, useAgentClient } from '@inferencesh/sdk/agent';
 import { WidgetRenderer } from '@/components/infsh/agent/widget-renderer';
 import { parseWidget, type WidgetAction, type WidgetFormData } from '@/components/infsh/agent/widget-types';
 import { TaskOutputWrapper } from '@/components/infsh/task/task-output-wrapper';
+import { IntegrationRequirementCard } from '@/components/infsh/agent/integration-requirement-card';
 import { Markdown } from '@/lib/pretext-md/react';
 
 // Tool finish constants
@@ -172,6 +173,25 @@ export const ToolInvocation = memo(function ToolInvocation({
     status === ToolInvocationStatusInProgress ||
     status === ToolInvocationStatusAwaitingInput ||
     status === ToolInvocationStatusPending;
+
+  // A tool can be blocked waiting for the user to connect an integration or
+  // grant a scope. The backend reports that as requirement_errors on the
+  // invocation data rather than as a failure, so surface the connect card
+  // instead of rendering it as a normal awaiting-input tool call.
+  const integrationRequirementErrors = useMemo(() => {
+    if (status !== ToolInvocationStatusAwaitingInput || !invocation.data) return null;
+    try {
+      const data = typeof invocation.data === 'string'
+        ? JSON.parse(invocation.data)
+        : invocation.data;
+      if (data?.requirement_errors && Array.isArray(data.requirement_errors)) {
+        return data.requirement_errors;
+      }
+    } catch {
+      // Not requirement data
+    }
+    return null;
+  }, [status, invocation.data]);
 
   // Check if this is an app tool with an execution_id (task)
   const isAppTool = invocation.type === ToolTypeApp;
@@ -340,6 +360,19 @@ export const ToolInvocation = memo(function ToolInvocation({
   // Widget is interactive when awaiting input OR completed (for actions like "Create Variation")
   const isWidgetInteractive = status === ToolInvocationStatusAwaitingInput ||
     status === ToolInvocationStatusCompleted;
+
+  // Blocked on an integration — show the connect / add-permissions card rather
+  // than the normal tool-call UI, since there is nothing for the user to do
+  // with the tool itself until the requirement is satisfied.
+  if (integrationRequirementErrors) {
+    return (
+      <IntegrationRequirementCard
+        errors={integrationRequirementErrors}
+        toolNames={[functionName]}
+        className={className}
+      />
+    );
+  }
 
   // For finish tool with standard schema (has status field), use custom FinishBlock
   // For custom output schemas, fall through to widget rendering
