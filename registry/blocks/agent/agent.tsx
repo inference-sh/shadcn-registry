@@ -18,6 +18,7 @@ import {
   ChatMessageRoleAssistant,
   ChatMessageContentTypeReasoning,
   ChatMessageContentTypeText,
+  isChatBusy,
   type ChatMessageDTO,
 } from '@inferencesh/sdk';
 import {
@@ -199,7 +200,7 @@ const AgentContent = memo(function AgentContent({
   const hasMessages = messages.length > 0;
 
   // Show typing indicator when generating and no content yet
-  const isGenerating = chat?.status === 'busy';
+  const isGenerating = isChatBusy(chat);
   const lastMessage = messages[messages.length - 1];
   const lastHasContent = lastMessage?.content?.some(
     (c) => c.type === ChatMessageContentTypeText && c.text?.trim() ||

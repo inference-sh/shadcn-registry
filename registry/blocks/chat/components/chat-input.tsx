@@ -23,7 +23,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useAgentChat, useAgentActions } from '@inferencesh/sdk/agent';
-import { ChatStatusBusy } from '@inferencesh/sdk';
+import { isChatBusy } from '@inferencesh/sdk';
 import {
   useFileUploadManager,
   FileUploadList,
@@ -96,7 +96,7 @@ export const ChatInput = memo(forwardRef<ChatInputHandle, ChatInputProps>(functi
   const showImageButton = allowAttachments !== false && allowImages;
   const enableAttachments = showFileButton || showImageButton;
   const { chat, error } = useAgentChat();
-  const isBusy = chat?.status === ChatStatusBusy;
+  const isBusy = isChatBusy(chat);
   const { sendMessage, stopGeneration, clearError } = useAgentActions();
 
   const [value, setValue] = useState('');
