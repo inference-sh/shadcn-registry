@@ -301,7 +301,7 @@ function FragmentRenderer({ fragment }: { fragment: LineFragment }) {
   let content: React.ReactNode = fragment.text
   if (fragment.isStrikethrough) content = <del>{content}</del>
   if (fragment.href) {
-    return <>{space}<a href={fragment.href} className="underline text-primary" style={style}>{content}</a></>
+    return <>{space}<a href={fragment.href} className="underline text-primary" style={style} target="_blank" rel="noopener noreferrer">{content}</a></>
   }
   return <>{space}<span style={style}>{content}</span></>
 }
@@ -401,7 +401,7 @@ function FlowInlineItem({ item }: { item: InlineItem }) {
       return <code className="bg-foreground/[0.06] rounded px-1 py-0.5 text-[0.9em]">{item.text}</code>
     case 'link':
       return (
-        <a href={item.href} className="underline text-primary">
+        <a href={item.href} className="underline text-primary" target="_blank" rel="noopener noreferrer">
           <FlowInlineItems items={item.items} />
         </a>
       )
