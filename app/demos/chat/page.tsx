@@ -56,19 +56,19 @@ export default function ChatDemoPage() {
           <h2 className="text-2xl font-semibold">how it works</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="border rounded-lg p-4 space-y-2">
-              <div className="text-sm font-medium">measure</div>
+              <div className="text-sm font-medium"><span>measure</span></div>
               <p className="text-xs text-muted-foreground">
                 text is measured with <a href="https://github.com/chenglou/pretext" className="underline">pretext</a> — pure canvas arithmetic, zero DOM reads. code blocks, tables, images, and embeds are measured by plugins that own their dimensions.
               </p>
             </div>
             <div className="border rounded-lg p-4 space-y-2">
-              <div className="text-sm font-medium">virtualize</div>
+              <div className="text-sm font-medium"><span>virtualize</span></div>
               <p className="text-xs text-muted-foreground">
                 predicted heights feed into the virtualizer. only visible messages are in the DOM. scroll position is preserved across width changes. strategies are cached — streaming only recomputes 1 message per frame.
               </p>
             </div>
             <div className="border rounded-lg p-4 space-y-2">
-              <div className="text-sm font-medium">correct</div>
+              <div className="text-sm font-medium"><span>correct</span></div>
               <p className="text-xs text-muted-foreground">
                 after paint, a ResizeObserver measures the real DOM height. any drift between prediction and reality is corrected automatically. the result: accurate layout with zero layout thrashing.
               </p>

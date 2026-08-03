@@ -102,7 +102,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
             })
             // Use div for block content to avoid invalid <div> inside <p> nesting
             return hasBlockContent && !compact ? (
-              <div className={paragraphClass}>{children}</div>
+              <div className={paragraphClass}><span>{children}</span></div>
             ) : (
               <p className={paragraphClass}>{children}</p>
             )
@@ -216,4 +216,3 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
     </div>
   )
 })
-

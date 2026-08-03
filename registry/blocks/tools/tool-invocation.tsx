@@ -1,6 +1,6 @@
 /**
  * ToolInvocation Primitive
- * 
+ *
  * Displays a single tool invocation with collapsible details, widget support,
  * and task output for app tools.
  */
@@ -130,7 +130,7 @@ const FinishBlock = memo(function FinishBlock({
 
 /**
  * ToolInvocation - Single tool call display with widget and task output support
- * 
+ *
  * @example
  * ```tsx
  * <ToolInvocation invocation={toolInvocation} />
@@ -415,7 +415,7 @@ export const ToolInvocation = memo(function ToolInvocation({
           {/* Arguments */}
           {hasArgs && (
             <div className="border-t px-2 py-1.5 text-xs">
-              <div className="text-muted-foreground/50 mb-1">arguments:</div>
+              <div className="text-muted-foreground/50 mb-1"><span>arguments:</span></div>
               <pre className="text-muted-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
                 {JSON.stringify(invocation.function?.arguments, null, 2)}
               </pre>
@@ -497,7 +497,7 @@ export const ToolInvocation = memo(function ToolInvocation({
       <div className="px-2 py-1.5 text-xs space-y-1.5">
         {hasArgs && (
           <div>
-            <div className="text-muted-foreground/50 mb-1">arguments:</div>
+            <div className="text-muted-foreground/50 mb-1"><span>arguments:</span></div>
             <pre className="text-muted-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
               {JSON.stringify(invocation.function?.arguments, null, 2)}
             </pre>
@@ -505,7 +505,7 @@ export const ToolInvocation = memo(function ToolInvocation({
         )}
         {hasResult && (
           <div>
-            <div className="text-muted-foreground/50 mb-1">result:</div>
+            <div className="text-muted-foreground/50 mb-1"><span>result:</span></div>
             <pre className="text-foreground whitespace-pre-wrap overflow-y-auto max-h-[150px]">
               {typeof invocation.result === 'string'
                 ? invocation.result

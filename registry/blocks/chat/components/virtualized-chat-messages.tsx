@@ -197,7 +197,7 @@ export const VirtualizedChatMessages = memo(function VirtualizedChatMessages({
 
           {/* Typing indicator — shown outside virtualizer, after all messages */}
           {typingIndicator && (
-            <div className="px-4 py-2">{typingIndicator}</div>
+            <div className="px-4 py-2"><span>{typingIndicator}</span></div>
           )}
 
           {/* Scroll-to-top padding */}

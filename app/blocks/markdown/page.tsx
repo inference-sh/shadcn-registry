@@ -299,7 +299,7 @@ function VirtualizedDemo({ msgCount, setMsgCount }: { msgCount: number; setMsgCo
               ref={list.getItemRef(item.id)}
               className="border border-border/50 rounded-lg p-3 bg-background"
             >
-              <div className="text-[10px] text-muted-foreground/40 mb-1">#{item.data.id}</div>
+              <div className="text-[10px] text-muted-foreground/40 mb-1"><span>#{item.data.id}</span></div>
               <Markdown content={item.data.content} />
             </div>
           ))}

@@ -1,6 +1,6 @@
 /**
  * MessageContent Primitive
- * 
+ *
  * Renders message text content with markdown support.
  */
 
@@ -172,7 +172,7 @@ const ImageAttachment = memo(function ImageAttachment({ url, className }: ImageA
 
 /**
  * MessageContent - Renders message text with markdown
- * 
+ *
  * @example
  * ```tsx
  * <MessageContent message={message} />
@@ -226,7 +226,7 @@ export const MessageContent = memo(function MessageContent({
         <div className="w-full">
           {isUser ? (
             <div className="flex flex-col gap-2">
-              <div className="whitespace-pre-wrap">{displayContent}</div>
+              <div className="whitespace-pre-wrap"><span>{displayContent}</span></div>
               {shouldTruncate && (
                 <Button
                   variant="ghost"
@@ -248,4 +248,3 @@ export const MessageContent = memo(function MessageContent({
 });
 
 MessageContent.displayName = 'MessageContent';
-

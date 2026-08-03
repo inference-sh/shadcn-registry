@@ -324,7 +324,7 @@ export const TaskOutput = memo(function TaskOutput({
   }
 
   if (compact) {
-    return <div className={className}>{content}</div>;
+    return <div className={className}><span>{content}</span></div>;
   }
 
   return (
