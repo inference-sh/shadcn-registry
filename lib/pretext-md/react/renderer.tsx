@@ -263,7 +263,7 @@ function MeasuredBlockRenderer({ block }: { block: MeasuredBlock }) {
 
 function MeasuredInlineBlock({ block, tag }: { block: MeasuredBlock; tag: string }) {
   if (!block.lines) return null
-  const Tag = tag as any
+  const Tag = tag as React.ElementType
   const lh = block.lines.length > 0 ? block.height / block.lines.length : 20
   return (
     <Tag style={{ margin: 0, width: '100%' }}>
