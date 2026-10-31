@@ -111,7 +111,7 @@ const MOCK_CONTEXT: AgentChatContextValue = {
     submitToolResult: noop, approveTool: noop, rejectTool: noop, alwaysAllowTool: noop,
   },
   client: {
-    http: { request: noop as never, getStreamableConfig: () => ({ url: '', headers: {} }), getStreamDefault: () => true, getPollIntervalMs: () => 1000 },
+    http: { request: noop as never, getStreamableConfig: () => ({ url: '', headers: {}, credentials: 'omit' }), getStreamDefault: () => true, getPollIntervalMs: () => 1000 },
     files: { upload: noopFile },
   },
 }
